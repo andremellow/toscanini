@@ -2,15 +2,28 @@
 
 Power Dev Workflow is a reusable Codex plugin for spec-driven software delivery. It coordinates bounded specialist agents, keeps reviews independent, preserves repository conventions, and turns available build and test tooling into a deterministic verification gate.
 
-## Use it
+## Install Power Dev Workflow
 
-Install the plugin through a Codex marketplace or use the repository directly while developing it. Apply it to a target repository with:
+Clone the official repository:
 
 ```sh
-./scripts/install-project --target /path/to/repository --dry-run
-./scripts/install-project --target /path/to/repository
-./scripts/doctor --target /path/to/repository
+git clone https://github.com/andremellow/powerdev-workflow.git
+cd powerdev-workflow
 ```
+
+The plugin may also be installed through a Codex marketplace when a marketplace distribution is available.
+
+## Apply it to a project
+
+`--target` is a local filesystem path to the project that should receive the workflow. It is not the Power Dev Workflow GitHub URL. For example, if the target project is checked out next to this repository as `my-application`:
+
+```sh
+./scripts/install-project --target ../my-application --dry-run
+./scripts/install-project --target ../my-application
+./scripts/doctor --target ../my-application
+```
+
+Replace `../my-application` with the actual local checkout of the project you want to configure. Always review the dry-run before installation.
 
 Then ask Codex:
 
@@ -60,6 +73,6 @@ Run those only after reviewing the proposed dependency and generated configurati
 
 ## Updating and rollback
 
-Run `./scripts/update-project --target ... --dry-run` before applying an update. Managed files are updated only when their installed copy still matches the recorded baseline. Local changes become conflicts. Use Git to review or revert an installation; the installer does not delete user files.
+Run `./scripts/update-project --target ../my-application --dry-run` before applying an update. Managed files are updated only when their installed copy still matches the recorded baseline. Local changes become conflicts. Use Git to review or revert an installation; the installer does not delete user files.
 
 See [agent roles](docs/agents.md), [stack adapters](docs/adapters.md), and [troubleshooting](docs/troubleshooting.md).
