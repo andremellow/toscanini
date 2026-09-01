@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, ArrowUpRight, Check, ChevronRight, CircleDot, Code2, Eye, FileText, GitBranch, Layers3, Pause, Play, Radio, ShieldCheck, Sparkles, TestTube2, Users, Workflow, Zap } from "lucide-react";
+import { Activity, ArrowUpRight, Check, ChevronRight, CircleDot, Code2, Eye, FileText, GitBranch, Layers3, Orbit, Pause, Play, Radio, ShieldCheck, Sparkles, TestTube2, Users, Zap } from "lucide-react";
 
 const agents = [
   { id: "architect", name: "Architect", state: "complete", icon: Layers3, angle: -145 },
@@ -40,7 +40,7 @@ export default function Home() {
   return <main className="shell">
     <div className="ambient ambient-a"/><div className="ambient ambient-b"/><div className="noise"/>
     <header className="header">
-      <div className="brand"><span className="brand-orb"><Workflow size={20}/></span><div><small>POWER DEV WORKFLOW</small><strong>Mission Control</strong></div></div>
+      <div className="brand"><span className="brand-orb"><Orbit size={20}/></span><div><small>POWER DEV WORKFLOW</small><strong>Mission Control</strong></div></div>
       <div className="mission-title"><span>ACTIVE MISSION</span><strong>Spec 024 · Multi-agent delivery system</strong></div>
       <div className="header-actions"><span className="live"><Radio size={13}/> LIVE PREVIEW</span><span className="elapsed"><small>ELAPSED</small>{clock}</span><button onClick={() => setPaused(!paused)} aria-label={paused ? "Resume timeline" : "Pause timeline"}>{paused ? <Play size={16}/> : <Pause size={16}/>}</button></div>
     </header>
@@ -57,7 +57,7 @@ export default function Home() {
         <div className="card-title core-heading"><div><small>AGENT NETWORK</small><h2>Execution intelligence</h2></div><span><i/> 2 ACTIVE · 2 QUEUED</span></div>
         <div className="hologram">
           <div className="orbit orbit-1"/><div className="orbit orbit-2"/><div className="orbit orbit-3"/><div className="orbit orbit-4"/>
-          <div className="sweep"/><div className="core-glow"/><div className="core"><span className="core-ring"/><Workflow size={34}/><strong>ORCHESTRATOR</strong><small>Routing context</small></div>
+          <div className="sweep"/><div className="core-glow"/><div className="core"><span className="core-ring"/><Orbit size={38}/><strong>ORCHESTRATOR</strong><small>Routing context</small></div>
           {agents.map((agent)=>{const radians=agent.angle*Math.PI/180;const x=50+40*Math.cos(radians);const y=50+40*Math.sin(radians);const Icon=agent.icon;return <button key={agent.id} className={`agent ${agent.state} ${selected===agent.id?"selected":""}`} style={{left:`${x}%`,top:`${y}%`}} onClick={()=>setSelected(agent.id)}><span><Icon size={18}/></span><strong>{agent.name}</strong><small>{agent.state}</small></button>})}
           <svg className="neural-lines" viewBox="0 0 100 100" preserveAspectRatio="none">{agents.map((agent)=>{const r=agent.angle*Math.PI/180;return <line key={agent.id} x1="50" y1="50" x2={50+40*Math.cos(r)} y2={50+40*Math.sin(r)}/>})}</svg>
           <div className="holo-caption"><span>SELECTED</span><strong>{agents.find(a=>a.id===selected)?.name}</strong><small>Independent context · production scope protected</small></div>
