@@ -1,0 +1,18 @@
+{
+  "name": "power-dev-workflow",
+  "version": "0.1.0",
+  "description": "A reusable, review-driven multi-agent development workflow for Codex.",
+  "author": {
+    "name": "Power Dev Workflow contributors"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Power Dev Workflow",
+    "shortDescription": "Plan, implement, review, and verify software changes.",
+    "longDescription": "Installs a project-aware multi-agent workflow with independent architecture, design, QA, and code review, deterministic verification, and optional live observability.",
+    "developerName": "Power Dev Workflow contributors",
+    "category": "Developer Tools",
+    "capabilities": [],
+    "defaultPrompt": "Use Power Dev Workflow to implement this change."
+  }
+}

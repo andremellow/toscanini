@@ -1,0 +1,4 @@
+interface:
+  display_name: "Power Dev Workflow"
+  short_description: "Independent multi-agent software delivery"
+  default_prompt: "Use Power Dev Workflow to implement this change."
