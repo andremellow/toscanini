@@ -1,5 +1,5 @@
 {
-  "name": "toscanini",
+  "name": "maestro-toscanini",
   "version": "0.1.0",
   "description": "A disciplined multi-agent workflow for shipping verified software",
   "license": "MIT",
@@ -18,7 +18,7 @@
   "files": [
     ".codex-plugin",
     "scripts/toscanini.mjs",
-    "scripts/*.py",
+    "scripts/workflow.py",
     "scripts/doctor",
     "scripts/inspect-project",
     "scripts/install-project",

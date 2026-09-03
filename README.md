@@ -40,7 +40,7 @@ When the package is published, installation will be:
 
 ```sh
 cd my-project
-npx toscanini init
+npx maestro-toscanini init
 ```
 
 Until then, link the CLI from the local Toscanini source checkout:
@@ -214,3 +214,24 @@ security-extension/
 ## Open source
 
 Toscanini is community software released under the [MIT License](LICENSE). Contributions for new ecosystems, stronger verification, specialist agents, documentation, and command-center interfaces are welcome.
+
+## Distribution
+
+The npm package is named `maestro-toscanini`; the installed executable remains `toscanini`:
+
+```sh
+npx maestro-toscanini init
+```
+
+After installing it in a project or globally, use the shorter executable:
+
+```sh
+npm install --save-dev maestro-toscanini
+npx toscanini init
+```
+
+A Homebrew formula will follow versioned releases through the community tap:
+
+```sh
+brew install andremellow/tap/toscanini
+```
