@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Power Dev Workflow Command Center',
+  title: 'Toscanini Command Center',
   description: 'Live multi-agent workflow topology, handoffs, and verification telemetry.',
 };
 

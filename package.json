@@ -1,0 +1,44 @@
+{
+  "name": "toscanini",
+  "version": "0.1.0",
+  "description": "A disciplined multi-agent workflow for shipping verified software",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andremellow/toscanini.git"
+  },
+  "homepage": "https://github.com/andremellow/toscanini#readme",
+  "bugs": {
+    "url": "https://github.com/andremellow/toscanini/issues"
+  },
+  "type": "module",
+  "bin": {
+    "toscanini": "scripts/toscanini.mjs"
+  },
+  "files": [
+    ".codex-plugin",
+    "scripts/toscanini.mjs",
+    "scripts/*.py",
+    "scripts/doctor",
+    "scripts/inspect-project",
+    "scripts/install-project",
+    "scripts/update-project",
+    "scripts/verify",
+    "brand",
+    "skills",
+    "templates",
+    "docs",
+    "README.md",
+    "CONTRIBUTING.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "VERSION"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs && python3 -m unittest discover -s tests -v",
+    "test:cli": "node --test tests/*.test.mjs"
+  }
+}

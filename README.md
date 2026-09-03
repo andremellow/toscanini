@@ -1,78 +1,216 @@
-# Power Dev Workflow
+<p align="center">
+  <img src="brand/toscanini-maestro.png" alt="Toscanini conducting" width="260">
+</p>
 
-Power Dev Workflow is a reusable Codex plugin for spec-driven software delivery. It coordinates bounded specialist agents, keeps reviews independent, preserves repository conventions, and turns available build and test tooling into a deterministic verification gate.
+<h1 align="center">Toscanini</h1>
 
-## Install Power Dev Workflow
+<p align="center">
+  A disciplined multi-agent workflow for shipping software with independent architecture, testing, QA, and code review.
+</p>
 
-Clone the official repository:
+<p align="center">
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-3f3d39"></a>
+  <img alt="Status: early release" src="https://img.shields.io/badge/status-early%20release-b59b78">
+</p>
 
-```sh
-git clone https://github.com/andremellow/powerdev-workflow.git
-cd powerdev-workflow
+> **Early release:** the installer and workflow are usable today. The command centers are still evolving, and live activity depends on tasks emitting Toscanini telemetry.
+
+## The idea
+
+AI coding agents are fast, but one agent should not design a change, implement it, write its tests, and approve its own work without independent checks.
+
+Toscanini installs a persistent delivery policy into your repository. You keep speaking naturally to your coding agent; Toscanini decides which specialists are needed and makes every required gate produce evidence before the task can be called complete.
+
+```mermaid
+flowchart LR
+    R[Your request] --> T((Toscanini))
+    T --> A[Architecture]
+    T --> W[Implementation]
+    W --> X[Test Expert]
+    X --> Q[Executable QA]
+    Q --> C[Code Review]
+    C --> D[Verified delivery]
 ```
 
-The plugin may also be installed through a Codex marketplace when a marketplace distribution is available.
+Small changes take a smaller path. Risky changes earn more architecture, design, testing, QA, and independent review. Toscanini is the conductor, not another instrument: it coordinates the coding agents you already use.
 
-## Apply it to a project
+## Install
 
-`--target` is a local filesystem path to the project that should receive the workflow. It is not the Power Dev Workflow GitHub URL. For example, if the target project is checked out next to this repository as `my-application`:
+When the package is published, installation will be:
 
 ```sh
-./scripts/install-project --target ../my-application --dry-run
-./scripts/install-project --target ../my-application
-./scripts/doctor --target ../my-application
+cd my-project
+npx toscanini init
 ```
 
-Replace `../my-application` with the actual local checkout of the project you want to configure. Always review the dry-run before installation.
+Until then, link the CLI from the local Toscanini source checkout:
 
-Then ask Codex:
+```sh
+git clone https://github.com/andremellow/toscanini.git
+cd /path/to/toscanini
+npm link
+
+cd /path/to/my-project
+toscanini init
+```
+
+The current directory is the default target. The interactive initializer inspects the repository, suggests compatible adapters, previews its changes, and asks before writing anything.
+
+Start a new coding-agent session in the project after installation so the new repository instructions are loaded.
+
+## Daily use
+
+There is no separate `run` command and no Toscanini process to start. Ask your coding agent for work as usual:
 
 ```text
-Use Power Dev Workflow to implement spec 024.
-```
-
-Partial workflows are supported:
-
-```text
-Use Power Dev Workflow for architecture and design only. Do not modify code.
+Implement customer invitations with expiring links.
 ```
 
 ```text
-Review this branch with independent QA, architecture, and code-review agents.
+Fix the race condition in subscription renewal.
 ```
 
-## What gets installed
+The installed `AGENTS.md` policy activates the workflow automatically. Commands from enabled tools enter the same workflow; for example, `/speckit.implement` remains governed by Toscanini when the Spec Kit adapter is enabled.
 
-The installer merges a marked section into `AGENTS.md`, adds missing project-scoped agents under `.codex/agents`, installs repository skills under `.agents/skills`, and records managed-file hashes under `.power-dev-workflow/manifest.json`. Existing unmanaged files are never overwritten. A conflict is reported with a non-zero exit code.
+Toscanini does **not**:
 
-The workflow classifies changes as small, medium, or large. Only one implementer owns production-code edits at a time. Architecture, design, QA, and code reviews use separate subagent contexts.
+- replace Codex or another coding agent;
+- require you to launch orchestration manually;
+- install application frameworks;
+- pretend that tests passed or that an agent is active;
+- overwrite locally customized managed files during updates.
 
-## Command center
+## Specialists and gates
 
-`dashboard/` contains an optional local visual command center. It presents workflow phases, agent topology, handoffs, findings, and deterministic gates. Demo mode is clearly labeled. The integration contract supports Codex App Server thread and item events plus lifecycle hooks; it does not parse undocumented transcript formats.
+| Role | Responsibility |
+| --- | --- |
+| Architect | Defines boundaries, risks, data flow, and the implementation direction. |
+| Worker | Implements the approved change. |
+| Test Expert | Audits whether automated tests cover the real changed behavior with effective assertions. |
+| QA | Exercises the running UI or API with representative data. It does not review source code. |
+| Code Reviewer | Independently reviews the production diff for correctness, security, and maintainability. |
 
-Run it with Node.js 22.13 or newer:
+Architecture and design reviewers join when the change requires them. Reviewers receive neutral context and start without the implementation conversation, reducing confirmation bias.
+
+During `toscanini init`, use the interactive checklist to choose the specialists installed in the repository. You can review or change that selection later:
 
 ```sh
-cd dashboard
-npm run dev
+toscanini agent list
+toscanini agent select
 ```
 
-The dashboard is local by default. Publishing it is intentionally separate from installing the workflow.
+Use the arrow keys to move, <kbd>Space</kbd> to toggle an agent, and <kbd>Enter</kbd> to confirm. For scripts and CI, use `agent enable <name>` or `agent disable <name>` instead.
 
-## Laravel Boost
+## Adapters
 
-Laravel repositories remain fully usable without Boost. If Boost is absent, installation reports the optional commands but does not run them:
+The core workflow knows nothing about Laravel, Flutter, Spec Kit, or any other ecosystem. An **adapter** adds ecosystem-specific detection, instructions, files, or verification conventions without changing the core quality model.
+
+Built-in adapters:
+
+| Adapter | What it adds |
+| --- | --- |
+| `laravel` | Laravel-aware project context and optional Boost guidance. It does not install Laravel or Boost. |
+| `spec-kit` | Toscanini architecture, UX, and verification templates inside an existing Spec Kit workspace. |
+| `terminal-ui` | A local terminal view of configuration and emitted task activity. |
+
+Manage adapters at any time:
 
 ```sh
-composer require laravel/boost --dev
-php artisan boost:install
+toscanini adapter list
+toscanini adapter add laravel
+toscanini adapter add spec-kit
+toscanini adapter add terminal-ui
+toscanini adapter remove spec-kit
 ```
 
-Run those only after reviewing the proposed dependency and generated configuration. Existing Boost installations are detected and preserved.
+Use `--dry-run` to preview a change.
 
-## Updating and rollback
+### What would a Flutter adapter do?
 
-Run `./scripts/update-project --target ../my-application --dry-run` before applying an update. Managed files are updated only when their installed copy still matches the recorded baseline. Local changes become conflicts. Use Git to review or revert an installation; the installer does not delete user files.
+A useful Flutter adapter could:
 
-See [agent roles](docs/agents.md), [stack adapters](docs/adapters.md), and [troubleshooting](docs/troubleshooting.md).
+1. detect Flutter from `pubspec.yaml`;
+2. teach agents to respect the project's widget, state-management, and localization conventions;
+3. discover the repository-owned verification command, such as `flutter test`;
+4. add a Flutter specialist or reusable testing skill when needed;
+5. teach executable QA how to launch and inspect the supported target platform.
+
+It should not install Flutter, choose a state-management library, or change application code during setup.
+
+See [Creating an adapter](docs/creating-an-adapter.md) for a complete example and contribution checklist.
+
+## Optional terminal UI
+
+```sh
+toscanini adapter add terminal-ui
+toscanini ui
+```
+
+The UI observes privacy-safe events written by instrumented tasks. It does not launch the AI task, read hidden reasoning, or fabricate activity. If no task has emitted events, it displays configuration only.
+
+## Commands
+
+| Command | Purpose |
+| --- | --- |
+| `toscanini init` | Inspect and configure the current repository interactively. |
+| `toscanini inspect` | Show detected stack and verification information without changing files. |
+| `toscanini adapter list` | Show available and enabled adapters. |
+| `toscanini adapter add <name>` | Add an adapter to an existing installation. |
+| `toscanini adapter remove <name>` | Remove a managed adapter safely. |
+| `toscanini agent enable <name>` | Enable a specialist role. |
+| `toscanini agent disable <name>` | Disable an optional specialist role. |
+| `toscanini agent list` | Show every available specialist and whether it is enabled. |
+| `toscanini agent select` | Change enabled specialists with an interactive checklist. |
+| `toscanini ui` | Open the optional terminal command center. |
+| `toscanini update --dry-run` | Preview an update and report conflicts. |
+| `toscanini update` | Update managed files while preserving local customizations. |
+| `toscanini doctor` | Diagnose missing or modified managed files. |
+
+Pass `--target /local/path` only when operating on a repository other than the current directory.
+
+## Update safely
+
+```sh
+toscanini update --dry-run
+toscanini update
+toscanini doctor
+```
+
+Toscanini records hashes for the files it manages. An update replaces an unchanged managed file, but reports a conflict when you have customized it. Existing project instructions and user-owned files are preserved.
+
+## Extend Toscanini
+
+Organization-specific agents and skills can be distributed as an extension without forking the core:
+
+```text
+security-extension/
+├── toscanini-extension.json
+├── agents/
+│   └── security-reviewer.toml
+└── skills/
+    └── security-gate/
+        └── SKILL.md
+```
+
+```json
+{
+  "name": "security-extension"
+}
+```
+
+```sh
+./scripts/install-project --extension ../security-extension
+```
+
+## Project documentation
+
+- [Creating an adapter](docs/creating-an-adapter.md)
+- [Agent roles](docs/agents.md)
+- [Adapters and extensions](docs/adapters.md)
+- [Dashboard integration](dashboard/README.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Contributing](CONTRIBUTING.md)
+
+## Open source
+
+Toscanini is community software released under the [MIT License](LICENSE). Contributions for new ecosystems, stronger verification, specialist agents, documentation, and command-center interfaces are welcome.

@@ -1,4 +1,4 @@
-# Power Dev Workflow Command Center
+# Toscanini Command Center
 
 This optional local dashboard visualizes the workflow without replacing Codex's native agent UI.
 

@@ -1,0 +1,18 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Toscanini logo preview</title>
+  <rect width="1200" height="630" rx="32" fill="#071B22"/>
+  <g transform="translate(88 174)">
+    <g stroke="#63F5E2" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M0 68H280"/>
+      <path d="M140 68V158"/>
+      <path d="M230 18L168 178"/>
+    </g>
+    <circle cx="0" cy="68" r="11" fill="#071B22" stroke="#63F5E2" stroke-width="5"/>
+    <circle cx="280" cy="68" r="11" fill="#071B22" stroke="#63F5E2" stroke-width="5"/>
+    <circle cx="140" cy="158" r="11" fill="#071B22" stroke="#63F5E2" stroke-width="5"/>
+    <rect x="129" y="57" width="22" height="22" rx="3" transform="rotate(45 129 57)" fill="#63F5E2"/>
+    <circle cx="167" cy="178" r="7" fill="#63F5E2"/>
+  </g>
+  <text x="442" y="292" fill="#EAFDFC" font-family="Inter, Helvetica, Arial, sans-serif" font-size="61" font-weight="600" letter-spacing="10">TOSCANINI</text>
+  <text x="447" y="338" fill="#6E9CA2" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17" font-weight="500" letter-spacing="4">SOFTWARE, CONDUCTED.</text>
+</svg>

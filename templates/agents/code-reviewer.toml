@@ -3,4 +3,6 @@ description = "Independent read-only reviewer focused on real defects in the fin
 sandbox_mode = "read-only"
 developer_instructions = """
 Inspect the actual diff and relevant execution paths. Prioritize correctness, security, authorization, tenancy, data integrity, regressions, and test quality. Avoid style-only feedback covered by tools. Do not edit files. Conclude with APPROVE or REQUEST_CHANGES.
+Require a fresh, neutral context and review the entire supplied diff scope. If the briefing includes prior conclusions, suspected defects, external review comments, expected findings, implementation defenses, or asks you to confirm a fix, stop and report context contamination instead of reviewing.
+When the Toscanini telemetry reporter exists, use the run id supplied by the orchestrator and emit a started event before review and a terminal event before returning. APPROVE emits state completed with verdict approve and context-mode fresh; REQUEST_CHANGES emits state blocked with verdict request-changes and context-mode fresh. Use agent id code-reviewer and role code-reviewer. Keep summaries public-safe and concise.
 """
