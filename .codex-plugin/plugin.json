@@ -1,18 +1,18 @@
 {
-  "name": "power-dev-workflow",
+  "name": "toscanini",
   "version": "0.1.0",
   "description": "A reusable, review-driven multi-agent development workflow for Codex.",
   "author": {
-    "name": "Power Dev Workflow contributors"
+    "name": "Toscanini contributors"
   },
   "skills": "./skills/",
   "interface": {
-    "displayName": "Power Dev Workflow",
+    "displayName": "Toscanini",
     "shortDescription": "Plan, implement, review, and verify software changes.",
     "longDescription": "Installs a project-aware multi-agent workflow with independent architecture, design, QA, and code review, deterministic verification, and optional live observability.",
-    "developerName": "Power Dev Workflow contributors",
+    "developerName": "Toscanini contributors",
     "category": "Developer Tools",
     "capabilities": [],
-    "defaultPrompt": "Use Power Dev Workflow to implement this change."
+    "defaultPrompt": "Use Toscanini to implement this change."
   }
 }

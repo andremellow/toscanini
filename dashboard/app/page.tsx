@@ -40,7 +40,7 @@ export default function Home() {
   return <main className="shell">
     <div className="ambient ambient-a"/><div className="ambient ambient-b"/><div className="noise"/>
     <header className="header">
-      <div className="brand"><span className="brand-orb"><Orbit size={20}/></span><div><small>POWER DEV WORKFLOW</small><strong>Mission Control</strong></div></div>
+      <div className="brand"><span className="brand-orb"><Orbit size={20}/></span><div><small>TOSCANINI</small><strong>Mission Control</strong></div></div>
       <div className="mission-title"><span>ACTIVE MISSION</span><strong>Spec 024 · Multi-agent delivery system</strong></div>
       <div className="header-actions"><span className="live"><Radio size={13}/> LIVE PREVIEW</span><span className="elapsed"><small>ELAPSED</small>{clock}</span><button onClick={() => setPaused(!paused)} aria-label={paused ? "Resume timeline" : "Pause timeline"}>{paused ? <Play size={16}/> : <Pause size={16}/>}</button></div>
     </header>
@@ -71,6 +71,6 @@ export default function Home() {
     </section>
 
     <section className="glass timeline-card"><div className="timeline-heading"><div><small>MISSION TIMELINE</small><h2>Continuous delivery record</h2></div><span>Updates appear here as agents complete work</span></div><div className="timeline">{timeline.map((item,index)=><div className={`timeline-item ${item.status}`} key={item.time}><div className="timeline-marker"><span>{item.status==="done"?<Check size={12}/>:item.status==="active"?<CircleDot size={12}/>:index+1}</span></div><time>{item.time}</time><strong>{item.title}</strong><p>{item.body}</p>{item.file&&<button><FileText size={13}/>{item.file}<ArrowUpRight size={12}/></button>}</div>)}</div></section>
-    <footer><span><i/> APP SERVER CONTRACT READY</span><span>POWER DEV WORKFLOW · v0.1.0</span><span><Users size={13}/> 6 SPECIALIST CONTEXTS</span></footer>
+    <footer><span><i/> APP SERVER CONTRACT READY</span><span>TOSCANINI · v0.1.0</span><span><Users size={13}/> 6 SPECIALIST CONTEXTS</span></footer>
   </main>;
 }

@@ -1,9 +1,9 @@
 ---
-name: power-architecture
+name: toscanini-architecture
 description: Create or independently review architecture for software changes involving boundaries, data, authorization, tenancy, concurrency, integrations, or operational risk.
 ---
 
-# Power Architecture
+# Toscanini Architecture
 
 Inspect existing architecture before proposing change. Prefer established project patterns and the simplest sufficient design. Cover boundaries, contracts, data changes, authorization, tenancy, transactions, concurrency, operational risks, tradeoffs, migrations, rollback, and required tests.
 

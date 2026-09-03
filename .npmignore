@@ -1,0 +1,6 @@
+**/__pycache__/
+*.py[cod]
+dashboard/
+tests/
+scripts/migrate-legacy-install
+scripts/migrate-legacy-install.py
