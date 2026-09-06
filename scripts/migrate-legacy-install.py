@@ -42,7 +42,7 @@ def main() -> int:
     legacy_manifest = json.loads(legacy_manifest_path.read_text(encoding="utf-8"))
     configuration = legacy_manifest.get("configuration", {})
     adapters = configuration.get("adapters", [])
-    enabled_agents = set(configuration.get("agents", workflow.BUILT_IN_AGENTS))
+    enabled_agents = {"test-analyst" if agent == "test-expert" else agent for agent in configuration.get("agents", workflow.BUILT_IN_AGENTS)}
     disabled_agents = [agent for agent in workflow.BUILT_IN_AGENTS if agent not in enabled_agents]
     extensions = configuration.get("extensions", [])
     if extensions:

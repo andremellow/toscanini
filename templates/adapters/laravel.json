@@ -1,0 +1,36 @@
+{
+  "id": "laravel",
+  "name": "Laravel",
+  "detection": {
+    "all": [
+      {"type": "file", "path": "artisan"},
+      {"type": "composer-package", "package": "laravel/framework"}
+    ]
+  },
+  "checks": [
+    {
+      "id": "laravel-framework",
+      "label": "Laravel framework",
+      "type": "composer-package",
+      "package": "laravel/framework",
+      "importance": "required",
+      "missing": "Laravel could not be confirmed from composer.json."
+    },
+    {
+      "id": "laravel-boost",
+      "label": "Laravel Boost",
+      "type": "composer-package",
+      "package": "laravel/boost",
+      "importance": "recommended",
+      "missing": "Laravel Boost is not installed."
+    },
+    {
+      "id": "laravel-pint",
+      "label": "Laravel Pint",
+      "type": "composer-package",
+      "package": "laravel/pint",
+      "importance": "recommended",
+      "missing": "Laravel Pint is not installed."
+    }
+  ]
+}

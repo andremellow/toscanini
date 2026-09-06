@@ -1,26 +1,36 @@
 ---
 name: toscanini-workflow
-description: Orchestrate feature development, material bug fixes, refactors, and architecture changes with independent planning, implementation, QA, and review. Also handles explicit architecture-only, QA-only, and review-only requests.
+description: Orchestrate feature development, material bug fixes, refactors, and architecture changes through an approved execution contract, independent complete review rounds, executable QA, causal findings, and impact-based revalidation.
 ---
 
 # Toscanini Workflow
 
-Preserve the user's requirements and repository rules. Inspect before planning. Classify the change and state why any role is omitted.
+Preserve the user's request and repository rules. Inspect before planning. Choose the active assurance and classify the change. Read [execution contracts](references/execution-contract.md) and [orchestration](references/orchestration.md).
 
-- Small: worker; deterministic verification; test-expert audit for behavioral changes; executable QA when a user or API path changed; then code review.
-- Medium: architect; design agent for UI; plan review when risky; worker; verification; test-expert audit; executable QA; final architecture and code review.
-- Large: specification clarification and analysis; architecture and UX artifacts; independent reviews; user approval for material decisions; worker; verification; test-expert audit; executable QA; final reviews; resolve and repeat.
+Before implementation, create and approve the run's execution contract. Freeze its goal, scope, non-goals, acceptance criteria, architecture invariants, direct regression surfaces, complete QA scenario matrix, artifacts, and budgets. Specialists cannot expand that validation scope without explicit contract amendment. If Spec Kit is installed and specification is required, require approved specification, clarification, and plan artifacts or ask the user to explicitly waive the gate with a recorded reason. Do not silently skip it.
 
-Never let an author review their own work. Spawn architecture review, test expert, QA, and code review in independent contexts and give them accepted artifacts plus repository evidence, not the author's persuasive summary. Only the active worker may edit production code or tests. The test expert is read-only and audits automated-test effectiveness. QA does not review or edit code; it exercises actual product behavior and may create temporary data only after proving the environment is local, ephemeral, or explicitly designated for testing. Neither role substitutes for the other.
+Use this order for behavioral work:
 
-All review and QA roles must start with no inherited conversation history (`fork_turns: none`). Give them a neutral evidence packet: accepted requirements, repository instructions, relevant artifact paths, diff scope, and inspection commands. Never prime them with suspected bugs, expected findings, prior agent conclusions, implementation defenses, or external review comments. A request to confirm a known fix is not an independent review. Discard and rerun any contaminated review in a fresh context.
+1. Contract, clarification, and Spec Kit gate when applicable.
+2. Architecture plus independent Architecture Review when applicable.
+3. One Worker implements production code and tests.
+4. Run deterministic verification.
+5. Run Code Review and Test Analyst against the same stable checkpoint; collect their complete finding sets.
+6. After source-level blockers are resolved, run executable QA through the real UI or API.
+7. Wait for every assigned specialist, consolidate findings, classify causes, and return one correction batch to the failed stage.
+8. Revalidate affected gates against the remediation delta.
+9. Run one final independent whole-scope review and the completion gate.
 
-Use stable acceptance identifiers such as `AC-01`. Verification must map each criterion to implementation evidence, effective automated evidence, executable QA evidence when applicable, and result. Require evidence that tests execute the changed branch with representative state; empty fixtures cannot validate behavior inside collection or record paths. A green test command alone is not sufficient. Do not claim completion while blocking findings, missing regression coverage, or an unvalidated changed user path remains.
+Context isolation removes bias, not accepted artifacts. Fresh reviewers receive the contract, specification, architecture, acceptance criteria, repository rules, raw scope, and inspection commands; they do not receive author conclusions or previous verdicts. Directed remediation verification receives finding IDs and is not presented as an independent review.
 
-Enforce the feedback loop. Test Expert `REQUEST_CHANGES` returns to the Worker for test repair, followed by deterministic verification and a fresh independent test audit. QA `FAIL` returns to the Worker for repair, followed by deterministic verification, a fresh test audit, and fresh executable QA. QA returns `BLOCKED` when it cannot safely prepare representative data or exercise the changed path. Continue until all required gates approve or a genuine user/external blocker remains.
+Require reviewers to inspect their entire assigned scope and report all material findings before returning. No reviewer may add a new blocking criterion outside the approved contract. Classify valuable adjacent improvements as follow-ups. A genuine spec or architecture gap amends and reapproves the contract before work continues.
 
-If the repository contains `.toscanini/bin/toscanini-event.py`, create a unique run id per user task, emit privacy-safe lifecycle telemetry for the orchestrator, and pass the run id to every specialist. Require every specialist to emit `started` and a terminal `completed`, `blocked`, or `failed` event; review roles must include their structured verdict. Emit `handoff` before delegation and `progress` only for material milestones.
+Use the finding ledger and route `SPEC_GAP` to clarification, `ARCHITECTURE_GAP` to Architecture, `IMPLEMENTATION_DEVIATION` to the Worker, `TEST_GAP` to test implementation, `QA_GAP` to the QA plan, `NEW_REQUIREMENT` to the user, and `ENVIRONMENT_FAILURE` to environment repair or a blocker. Record the detecting role separately from the `failureStage` that should have prevented the problem.
 
-Before declaring behavioral work complete, run `.toscanini/bin/toscanini-gate.py` for the current run id and require exit code zero. Add architecture and design requirements when those reviews apply. Review terminal events must declare `context-mode=fresh`; inherited or unspecified context is rejected. The completion gate, not the orchestrator's recollection, is the source of truth. Missing telemetry is a blocking incomplete gate; telemetry write failures should be retried or reported, never silently treated as approval.
+After remediation, run canonical verification once, inspect the delta, and reopen only affected gates. Every reopened role performs directed verification of assigned findings and the smallest direct regression checks caused by the remediation. It must not restart a full audit or add unrelated blockers. Only the designated final review inspects the complete contracted result again from raw evidence.
 
-For installation, update, doctor, or rollback work, read [installation](references/installation.md). For role inputs and outputs, read [orchestration](references/orchestration.md).
+Apply `fast` for one remediation round and 8 specialist starts, `standard` for two rounds and 15 specialist starts, and `critical` for two rounds and 18 specialist starts. Critical means deeper evidence, not unlimited repetition. Any exhausted limit or new blocker family found by the final review triggers stop-and-replan, never approval. Automatically escalate high-risk security, money, destructive, migration, concurrency, sensitive-data, and data-loss work to critical.
+
+Finish with an execution report that makes efficiency deductions and failure attribution visible. Specialists may propose reusable learnings for project policies, adapters, agents, or workflow stages, but Toscanini never applies them automatically. Keep each proposal pending until the user explicitly accepts, rejects, or defers it; application is a separate change.
+
+Record telemetry and require `toscanini_contract.py` before implementation. For behavioral completion, require `toscanini-gate.py --require-contract` plus architecture/design flags when applicable. For installation operations, read [installation](references/installation.md).

@@ -1,0 +1,25 @@
+{
+  "id": "spec-kit",
+  "name": "Spec Kit",
+  "detection": {
+    "all": [{"type": "directory", "path": ".specify/scripts"}]
+  },
+  "checks": [
+    {
+      "id": "spec-kit-installation",
+      "label": "Spec Kit installation",
+      "type": "directory",
+      "path": ".specify/scripts",
+      "importance": "required",
+      "missing": "The Spec Kit adapter is enabled, but Spec Kit is not installed."
+    },
+    {
+      "id": "spec-kit-templates",
+      "label": "Spec Kit templates",
+      "type": "directory",
+      "path": ".specify/templates",
+      "importance": "required",
+      "missing": "Spec Kit templates are missing; run toscanini update after installing Spec Kit."
+    }
+  ]
+}

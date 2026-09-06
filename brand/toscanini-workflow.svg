@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 720" role="img" aria-labelledby="title description">
+  <title id="title">Toscanini orchestration workflow</title>
+  <description id="description">A central Toscanini conductor exchanges briefs, artifacts, and verdicts with architecture, implementation, test analyst, executable QA, and code review specialists before verified delivery.</description>
+  <defs>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9a8060" stop-opacity=".2"/>
+      <stop offset="1" stop-color="#9a8060" stop-opacity=".65"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8c806f"/>
+    </marker>
+    <style>
+      .ink{fill:#282725}.muted{fill:#746f68}.surface{fill:#f7f4ee;stroke:#b5aa9b}.line{fill:none;stroke:#8c806f;stroke-width:1.7;marker-end:url(#arrow)}.return{fill:none;stroke:#b39b7a;stroke-width:1.7;marker-end:url(#arrow)}.dash{stroke-dasharray:6 7}.node-title{font:600 17px ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#282725}.node-sub{font:12px ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#746f68;letter-spacing:.04em}.edge{font:11px ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#746f68}.small{font:10px ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#746f68;letter-spacing:.13em}.brand{font:700 20px ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#282725;letter-spacing:.12em}
+      @media (prefers-color-scheme:dark){.ink,.node-title,.brand{fill:#eee9df}.muted,.node-sub,.edge,.small{fill:#aaa298}.surface{fill:#171717;stroke:#615b53}.line{stroke:#81786d}.return{stroke:#b79c78}}
+    </style>
+  </defs>
+
+  <path d="M180 360 H378" class="line"/>
+  <text x="226" y="346" class="edge">intent</text>
+  <path d="M822 360 C965 420 1082 401 1218 360" class="line"/>
+  <text x="1020" y="415" text-anchor="middle" class="edge">all gates verified</text>
+
+  <circle cx="600" cy="360" r="184" fill="none" stroke="url(#ring)" stroke-width="1.4"/>
+  <circle cx="600" cy="360" r="155" fill="none" stroke="#9a8060" stroke-opacity=".22" stroke-width="1.2" stroke-dasharray="3 8"/>
+  <circle cx="600" cy="360" r="126" fill="none" stroke="#9a8060" stroke-opacity=".32" stroke-width="1.2"/>
+  <text x="600" y="170" text-anchor="middle" class="small">ASSURANCE · FAST / STANDARD / CRITICAL</text>
+
+  <path d="M520 276 C455 206 389 181 324 174" class="line"/>
+  <path d="M326 194 C405 208 464 241 531 292" class="return"/>
+  <path d="M514 444 C441 500 370 533 302 544" class="line"/>
+  <path d="M305 565 C397 557 467 514 529 462" class="return"/>
+
+  <path d="M680 276 C744 210 806 184 871 176" class="line"/>
+  <path d="M869 196 C796 210 734 241 669 293" class="return"/>
+  <path d="M725 342 C804 319 870 314 936 319" class="line"/>
+  <path d="M936 339 C858 342 797 352 730 367" class="return"/>
+  <path d="M684 443 C756 494 819 527 886 541" class="line"/>
+  <path d="M883 562 C805 551 744 511 670 461" class="return"/>
+
+  <rect x="44" y="322" width="138" height="76" rx="16" class="surface"/>
+  <text x="113" y="353" text-anchor="middle" class="node-title">Your request</text>
+  <text x="113" y="375" text-anchor="middle" class="node-sub">natural language</text>
+
+  <rect x="1218" y="322" width="150" height="76" rx="16" class="surface"/>
+  <text x="1293" y="353" text-anchor="middle" class="node-title">Verified delivery</text>
+  <text x="1293" y="375" text-anchor="middle" class="node-sub">evidence complete</text>
+
+  <rect x="202" y="126" width="170" height="82" rx="16" class="surface"/>
+  <text x="287" y="158" text-anchor="middle" class="node-title">Architecture</text>
+  <text x="287" y="181" text-anchor="middle" class="node-sub">plan · boundaries · risks</text>
+
+  <rect x="178" y="526" width="196" height="82" rx="16" class="surface"/>
+  <text x="276" y="558" text-anchor="middle" class="node-title">Implementation</text>
+  <text x="276" y="581" text-anchor="middle" class="node-sub">code · tests · evidence</text>
+
+  <rect x="830" y="126" width="176" height="82" rx="16" class="surface"/>
+  <text x="918" y="158" text-anchor="middle" class="node-title">Test Analyst</text>
+  <text x="918" y="181" text-anchor="middle" class="node-sub">test effectiveness</text>
+
+  <rect x="932" y="300" width="210" height="82" rx="16" class="surface"/>
+  <text x="1037" y="332" text-anchor="middle" class="node-title">Executable QA</text>
+  <text x="1037" y="355" text-anchor="middle" class="node-sub">real behavior · real data</text>
+
+  <rect x="844" y="526" width="188" height="82" rx="16" class="surface"/>
+  <text x="938" y="558" text-anchor="middle" class="node-title">Code Review</text>
+  <text x="938" y="581" text-anchor="middle" class="node-sub">independent raw diff</text>
+
+  <circle cx="600" cy="360" r="92" class="surface" stroke-width="2"/>
+  <path d="M572 329 Q600 307 628 329 M600 312 V332" fill="none" stroke="#9a8060" stroke-width="3" stroke-linecap="round"/>
+  <text x="600" y="350" text-anchor="middle" class="brand">TOSCANINI</text>
+  <text x="600" y="374" text-anchor="middle" class="node-sub">conducts every handoff</text>
+
+  <path d="M543 449 C502 503 447 558 374 575" class="return dash"/>
+  <text x="508" y="624" text-anchor="middle" class="edge">consolidated corrections return to Implementation</text>
+
+  <g transform="translate(418 690)">
+    <path d="M0 0 h34" class="line"/>
+    <text x="44" y="4" class="edge">brief / work order</text>
+    <path d="M190 0 h34" class="return"/>
+    <text x="234" y="4" class="edge">artifact / verdict / findings</text>
+  </g>
+</svg>

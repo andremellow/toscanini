@@ -1,76 +1,77 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Activity, ArrowUpRight, Check, ChevronRight, CircleDot, Code2, Eye, FileText, GitBranch, Layers3, Orbit, Pause, Play, Radio, ShieldCheck, Sparkles, TestTube2, Users, Zap } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Activity, AlertTriangle, ArrowRight, Check, Clock3, Code2, Eye, FileSearch, GitBranch, Layers3, Radio, ShieldAlert, TestTube2, Users } from "lucide-react";
 
-const agents = [
-  { id: "architect", name: "Architect", state: "complete", icon: Layers3, angle: -145 },
-  { id: "design", name: "Design", state: "complete", icon: Sparkles, angle: -65 },
-  { id: "worker", name: "Worker", state: "active", icon: Code2, angle: 10 },
-  { id: "qa", name: "QA", state: "queued", icon: TestTube2, angle: 72 },
-  { id: "review", name: "Review", state: "queued", icon: Eye, angle: 145 },
+const roles = [
+  { id: "architect", label: "Architect", starts: 1, findings: 0, icon: Layers3 },
+  { id: "architecture", label: "Architecture Review", starts: 7, findings: 4, icon: GitBranch },
+  { id: "specification", label: "Specification Review", starts: 1, findings: 0, icon: FileSearch },
+  { id: "worker", label: "Worker", starts: 9, findings: 0, icon: Code2 },
+  { id: "code", label: "Code Review", starts: 8, findings: 2, icon: Eye },
+  { id: "tests", label: "Test Analyst", starts: 9, findings: 9, icon: TestTube2 },
+  { id: "qa", label: "Executable QA", starts: 4, findings: 3, icon: Radio },
+  { id: "design", label: "Design Review", starts: 2, findings: 3, icon: Activity },
 ];
-const phases = ["Intake", "Architecture", "Plan review", "Implement", "Verify", "QA", "Final review", "Complete"];
-const gates = [
-  { name: "Architecture", detail: "Boundaries approved", status: "pass", icon: Layers3 },
-  { name: "Static analysis", detail: "No critical findings", status: "pass", icon: ShieldCheck },
-  { name: "Unit tests", detail: "184 of 236 complete", status: "active", icon: TestTube2 },
-  { name: "Application build", detail: "Waiting for tests", status: "queued", icon: Code2 },
+const phases = [
+  { label: "Plan & contract", minutes: 22, tone: "plan" },
+  { label: "Build & first review", minutes: 43, tone: "build" },
+  { label: "QA & remediation", minutes: 44, tone: "repair" },
+  { label: "Final review", minutes: 13, tone: "final" },
 ];
-const timeline = [
-  { time: "14:26", title: "Requirements mapped", body: "18 acceptance criteria linked to delivery evidence.", status: "done" },
-  { time: "14:28", title: "Architecture created", body: "Boundaries, data flow and rollback strategy documented.", status: "done", file: "architecture.md" },
-  { time: "14:31", title: "Independent review approved", body: "No coupling, tenancy or data-integrity blockers found.", status: "done", file: "review.md" },
-  { time: "14:32", title: "Implementation in progress", body: "Worker owns the production diff while reviewers remain isolated.", status: "active" },
-  { time: "NEXT", title: "Verification and QA", body: "Deterministic gates run before independent acceptance validation.", status: "queued" },
+const moments = [
+  { at: "00m", round: "R1", from: "Toscanini", to: "Architecture + Design", title: "Planning review begins", detail: "Three architecture findings; design approved.", kind: "review" },
+  { at: "21m", round: "R3", from: "Toscanini", to: "Worker", title: "Implementation starts", detail: "Approved specification and architecture become the worker contract.", kind: "build" },
+  { at: "42m", round: "R3", from: "Code + Tests", to: "Worker", title: "Eight findings consolidated", detail: "One source defect and seven test gaps returned together.", kind: "finding" },
+  { at: "62m", round: "R5", from: "QA", to: "Worker", title: "Browser QA finds media failure", detail: "Real UI validation blocks; remaining authority checks are interrupted.", kind: "qa" },
+  { at: "71m", round: "R6–R8", from: "Reviewers", to: "Worker", title: "Client remediation fragments", detail: "Three correction passes and repeated backend verification for narrow client deltas.", kind: "finding" },
+  { at: "84m", round: "R8", from: "API QA", to: "Worker", title: "Missing-file grant discovered", detail: "A partial API run finds a defect already visible in the earlier browser sequence.", kind: "qa" },
+  { at: "96m", round: "R9–R10", from: "Tests", to: "Worker", title: "Fixture passes for wrong reason", detail: "Negative authorization test lacked a usable positive control.", kind: "finding" },
+  { at: "102m", round: "R9", from: "Architecture", to: "Worker", title: "Late MIME compatibility finding", detail: "Architecture result arrives after the previous correction already completed.", kind: "late" },
+  { at: "117m", round: "R12", from: "API QA", to: "Final Code Review", title: "Partial QA recorded as pass", detail: "Bounded API evidence becomes the latest QA state while full visual QA remains blocked.", kind: "risk" },
+  { at: "122m", round: "R12", from: "Toscanini", to: "Delivery", title: "Completion remains blocked", detail: "Source converged; final UI and design evidence did not.", kind: "blocked" },
 ];
-const activity = [
-  { agent: "Worker", action: "is implementing the approved architecture", time: "now", tone: "active" },
-  { agent: "Orchestrator", action: "handed the bounded plan to Worker", time: "1m", tone: "neutral" },
-  { agent: "Design Reviewer", action: "approved responsive and failure states", time: "3m", tone: "done" },
-  { agent: "Architecture Reviewer", action: "approved boundaries and data integrity", time: "4m", tone: "done" },
+const problems = [
+  ["Gate identity", "Approvals were stored by role, without immutable scope or implementation checkpoint."],
+  ["Partial QA overwrite", "A bounded API pass replaced the latest state of a broader blocked browser QA."],
+  ["Mode contradiction", "Directed QA was told to confirm a fix and simultaneously reject fix-confirmation context."],
+  ["Fragmented checkpoint", "Architecture feedback arrived after another remediation batch had already started."],
+  ["Budget distortion", "The old gate treated the highest round number as the number of remediation batches."],
 ];
 
 export default function Home() {
-  const [paused, setPaused] = useState(false);
-  const [selected, setSelected] = useState("worker");
-  const [seconds, setSeconds] = useState(773);
-  useEffect(() => { if (paused) return; const id = setInterval(() => setSeconds((v) => v + 1), 1000); return () => clearInterval(id); }, [paused]);
-  const clock = `${String(Math.floor(seconds / 60)).padStart(2,"0")}:${String(seconds % 60).padStart(2,"0")}`;
-  return <main className="shell">
-    <div className="ambient ambient-a"/><div className="ambient ambient-b"/><div className="noise"/>
-    <header className="header">
-      <div className="brand"><span className="brand-orb"><Orbit size={20}/></span><div><small>TOSCANINI</small><strong>Mission Control</strong></div></div>
-      <div className="mission-title"><span>ACTIVE MISSION</span><strong>Spec 024 · Multi-agent delivery system</strong></div>
-      <div className="header-actions"><span className="live"><Radio size={13}/> LIVE PREVIEW</span><span className="elapsed"><small>ELAPSED</small>{clock}</span><button onClick={() => setPaused(!paused)} aria-label={paused ? "Resume timeline" : "Pause timeline"}>{paused ? <Play size={16}/> : <Pause size={16}/>}</button></div>
+  const [selectedRole, setSelectedRole] = useState("worker");
+  const [filter, setFilter] = useState("all");
+  const selected = roles.find((role) => role.id === selectedRole) ?? roles[0];
+  const visibleMoments = useMemo(() => filter === "all" ? moments : moments.filter((moment) => moment.kind === filter), [filter]);
+  const maxStarts = Math.max(...roles.map((role) => role.starts));
+  const SelectedIcon = selected.icon;
+  return <main className="forensics-shell">
+    <header className="topbar">
+      <div className="identity"><span className="monogram">T</span><div><small>TOSCANINI</small><strong>Execution Forensics</strong></div></div>
+      <div className="run-name"><small>RUN</small><strong>public-draft-preview-20260905</strong></div>
+      <span className="blocked-state"><ShieldAlert size={16}/> Delivery blocked</span>
     </header>
-
-    <nav className="workflow-rail" aria-label="Workflow progress">{phases.map((phase,index)=><div className={`workflow-step ${index<3?"done":index===3?"current":""}`} key={phase}><span>{index<3?<Check size={11}/>:index+1}</span><div><small>{String(index+1).padStart(2,"0")}</small><strong>{phase}</strong></div></div>)}</nav>
-
-    <section className="dashboard">
-      <aside className="left-stack">
-        <article className="glass progress-card"><div className="card-title"><div><small>MISSION PROGRESS</small><h2>Delivery pulse</h2></div><Zap size={18}/></div><div className="progress-dial"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50"/><circle className="fill" cx="60" cy="60" r="50"/></svg><div><strong>42<small>%</small></strong><span>ON TRACK</span></div></div><div className="progress-stats"><span><small>PHASE</small><strong>04 / 08</strong></span><span><small>RISK</small><strong>LOW</strong></span><span><small>BLOCKERS</small><strong>0</strong></span></div></article>
-        <article className="glass gates-card"><div className="card-title"><div><small>QUALITY SYSTEM</small><h2>Verification gates</h2></div><ShieldCheck size={18}/></div><div className="gates">{gates.map((gate)=><div className={`gate ${gate.status}`} key={gate.name}><span className="gate-orb"><gate.icon size={16}/></span><div><strong>{gate.name}</strong><small>{gate.detail}</small></div><span className="gate-state">{gate.status}</span></div>)}</div></article>
-      </aside>
-
-      <article className="glass core-card">
-        <div className="card-title core-heading"><div><small>AGENT NETWORK</small><h2>Execution intelligence</h2></div><span><i/> 2 ACTIVE · 2 QUEUED</span></div>
-        <div className="hologram">
-          <div className="orbit orbit-1"/><div className="orbit orbit-2"/><div className="orbit orbit-3"/><div className="orbit orbit-4"/>
-          <div className="sweep"/><div className="core-glow"/><div className="core"><span className="core-ring"/><Orbit size={38}/><strong>ORCHESTRATOR</strong><small>Routing context</small></div>
-          {agents.map((agent)=>{const radians=agent.angle*Math.PI/180;const x=50+40*Math.cos(radians);const y=50+40*Math.sin(radians);const Icon=agent.icon;return <button key={agent.id} className={`agent ${agent.state} ${selected===agent.id?"selected":""}`} style={{left:`${x}%`,top:`${y}%`}} onClick={()=>setSelected(agent.id)}><span><Icon size={18}/></span><strong>{agent.name}</strong><small>{agent.state}</small></button>})}
-          <svg className="neural-lines" viewBox="0 0 100 100" preserveAspectRatio="none">{agents.map((agent)=>{const r=agent.angle*Math.PI/180;return <line key={agent.id} x1="50" y1="50" x2={50+40*Math.cos(r)} y2={50+40*Math.sin(r)}/>})}</svg>
-          <div className="holo-caption"><span>SELECTED</span><strong>{agents.find(a=>a.id===selected)?.name}</strong><small>Independent context · production scope protected</small></div>
-        </div>
-      </article>
-
-      <aside className="right-stack">
-        <article className="glass brief-card"><div className="card-title"><div><small>MISSION BRIEF</small><h2>Current state</h2></div><GitBranch size={18}/></div><div className="brief-metrics"><div><strong>18<small>/18</small></strong><span>Criteria mapped</span></div><div><strong>14</strong><span>Files in scope</span></div><div><strong>06</strong><span>Isolated contexts</span></div></div><div className="risk"><ShieldCheck size={18}/><div><small>RISK POSTURE</small><strong>Controlled</strong></div><span>NO BLOCKERS</span></div></article>
-        <article className="glass activity-card"><div className="card-title"><div><small>LIVE ACTIVITY</small><h2>Who is doing what</h2></div><Activity size={18}/></div><div className="activities">{activity.map((item,index)=><div className="activity-item" key={index}><span className={`activity-dot ${item.tone}`}/><p><strong>{item.agent}</strong> {item.action}</p><time>{item.time}</time></div>)}</div><button className="view-log">View complete activity log <ChevronRight size={14}/></button></article>
-      </aside>
+    <section className="headline">
+      <div><small>EXECUTION DIAGNOSTIC</small><h1>Quality improved. Convergence failed.</h1><p>The implementation stabilized, but review identity, QA scope and remediation sequencing allowed the workflow to keep circling.</p></div>
+      <div className="score-ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="48"/><circle className="score-fill" cx="60" cy="60" r="48"/></svg><span><strong>3</strong><small>/ 10 efficiency</small></span></div>
     </section>
-
-    <section className="glass timeline-card"><div className="timeline-heading"><div><small>MISSION TIMELINE</small><h2>Continuous delivery record</h2></div><span>Updates appear here as agents complete work</span></div><div className="timeline">{timeline.map((item,index)=><div className={`timeline-item ${item.status}`} key={item.time}><div className="timeline-marker"><span>{item.status==="done"?<Check size={12}/>:item.status==="active"?<CircleDot size={12}/>:index+1}</span></div><time>{item.time}</time><strong>{item.title}</strong><p>{item.body}</p>{item.file&&<button><FileText size={13}/>{item.file}<ArrowUpRight size={12}/></button>}</div>)}</div></section>
-    <footer><span><i/> APP SERVER CONTRACT READY</span><span>TOSCANINI · v0.1.0</span><span><Users size={13}/> 6 SPECIALIST CONTEXTS</span></footer>
+    <section className="metric-strip">
+      <div><Clock3/><strong>2h 02m</strong><span>recorded runtime</span></div><div><Users/><strong>41</strong><span>agent activations</span></div><div><Code2/><strong>8</strong><span>worker corrections</span></div><div><AlertTriangle/><strong>21</strong><span>total findings</span></div><div><Check/><strong>17</strong><span>resolved findings</span></div>
+    </section>
+    <section className="time-allocation panel">
+      <div className="section-title"><div><small>TIME ALLOCATION</small><h2>Where the 122 minutes went</h2></div><span>Estimated from recorded lifecycle events</span></div>
+      <div className="phase-track">{phases.map((phase) => <div key={phase.label} className={`phase ${phase.tone}`} style={{flex: phase.minutes}}><strong>{phase.minutes}m</strong><span>{phase.label}</span></div>)}</div><div className="axis"><span>00:00</span><span>00:30</span><span>01:00</span><span>01:30</span><span>02:02</span></div>
+    </section>
+    <section className="analysis-grid">
+      <article className="panel network-panel"><div className="section-title"><div><small>COMMUNICATION LOAD</small><h2>Agent handoffs</h2></div><span>Click a role</span></div><div className="network-body">
+        <div className="role-bars">{roles.map((role) => { const Icon = role.icon; return <button key={role.id} className={selectedRole === role.id ? "role-row selected" : "role-row"} onClick={() => setSelectedRole(role.id)}><span className="role-icon"><Icon size={15}/></span><span className="role-label">{role.label}</span><span className="role-meter"><i style={{width: `${(role.starts/maxStarts)*100}%`}}/></span><strong>{role.starts}</strong></button>; })}</div>
+        <div className="role-focus"><span className="pulse-orbit"><SelectedIcon size={25}/></span><small>SELECTED ROLE</small><h3>{selected.label}</h3><div><span><strong>{selected.starts}</strong> activations</span><span><strong>{selected.findings}</strong> findings</span></div><p>{selected.id === "worker" ? "One implementation plus eight correction passes—the clearest signal that findings did not converge into complete batches." : `${selected.label} repeatedly exchanged evidence with Toscanini across the execution.`}</p></div>
+      </div></article>
+      <article className="panel fault-panel"><div className="section-title"><div><small>CONTROL FAILURES</small><h2>Why it kept looping</h2></div><span>5 systemic issues</span></div><div className="problem-list">{problems.map(([title, detail], index) => <div key={title}><span>{String(index+1).padStart(2,"0")}</span><p><strong>{title}</strong>{detail}</p></div>)}</div></article>
+    </section>
+    <section className="panel timeline-panel"><div className="section-title timeline-title"><div><small>COMMUNICATION TIMELINE</small><h2>What moved between agents</h2></div><div className="filters">{["all","finding","qa","late","risk"].map((value)=><button key={value} className={filter===value?"active":""} onClick={()=>setFilter(value)}>{value}</button>)}</div></div><div className="timeline-list">{visibleMoments.map((moment,index)=><article className={`moment ${moment.kind}`} key={`${moment.at}-${moment.title}`}><div className="moment-time"><strong>{moment.at}</strong><span>{moment.round}</span></div><div className="moment-route"><span>{moment.from}</span><ArrowRight size={15}/><span>{moment.to}</span></div><div className="moment-copy"><strong>{moment.title}</strong><p>{moment.detail}</p></div><span className="moment-index">{String(index+1).padStart(2,"0")}</span></article>)}</div></section>
+    <section className="decision-grid"><article className="panel conclusion"><small>EARLIEST AVOIDABLE DIVERGENCE</small><h2>The first checkpoint approved tests without executable client coverage, real contention proof or representative media fixtures.</h2></article><article className="panel correction"><small>NEW CONTROL MODEL</small><div><span>Freeze scope</span><ArrowRight/><span>One complete review batch</span><ArrowRight/><span>Directed fixes</span><ArrowRight/><span>One final review</span></div><p>Partial or directed evidence can close findings, but can no longer replace an independent gate.</p></article></section>
+    <footer><span>Source: Toscanini execution diagnostic · 88 telemetry events</span><span>CLI 0.5.0 · Project 0.4.0</span></footer>
   </main>;
 }
