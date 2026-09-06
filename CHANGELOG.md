@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Validate selected execution contracts in generic projects, respect Laravel adapter opt-outs, reject ledger references outside the frozen contract, and install Specification Reviewer during legacy migration.
+
 - Tune the Spec Kit adapter for unlimited material clarification, concrete rule scenarios, and scenario-to-test evidence without additional mandatory review loops.
 - Add optional pre-implementation discovery to Test Analyst and preserve upstream Spec Kit commands.
 

@@ -358,24 +358,7 @@ def verify(target: Path, run_id: str | None = None) -> int:
     if inspection["specKit"] and "spec-kit" not in adapters:
         print("BLOCKED: Spec Kit was detected, but its adapter is disabled. Run: toscanini adapter add spec-kit", file=sys.stderr)
         return 2
-    if "spec-kit" in adapters:
-        selected_run = run_id
-        if not selected_run:
-            print("BLOCKED: --run-id is required so Toscanini cannot approve the wrong Spec Kit execution.", file=sys.stderr)
-            return 2
-        print(f"Spec Kit gate: validating run {selected_run}")
-        validator = target / ".toscanini" / "bin" / "toscanini_contract.py"
-        result = subprocess.run([sys.executable, str(validator), "--run-id", selected_run], cwd=target, check=False)
-        if result.returncode:
-            print("BLOCKED: specification, clarification, plan, or execution contract is not approved.", file=sys.stderr)
-            return result.returncode
-        print("Spec Kit gate: approved")
-    else:
-        print("Spec Kit gate: not enabled for this project")
-    if inspection["laravel"]["detected"]:
-        if "laravel" not in adapters:
-            print("BLOCKED: Laravel was detected, but its adapter is disabled. Run: toscanini adapter add laravel", file=sys.stderr)
-            return 2
+    if "laravel" in adapters and inspection["laravel"]["detected"]:
         boost = inspection["laravel"]["boost"]
         policy = manifest.get("configuration", {}).get("laravelBoost", "optional")
         print(f"Laravel: {inspection['laravel']['framework'] or 'detected'}")
@@ -383,6 +366,16 @@ def verify(target: Path, run_id: str | None = None) -> int:
         if not boost and policy == "required":
             print("BLOCKED: Laravel Boost is required by this project's Toscanini policy.", file=sys.stderr)
             return 2
+    if not run_id:
+        print("BLOCKED: --run-id is required to validate the exact execution contract.", file=sys.stderr)
+        return 2
+    print(f"Execution contract gate: validating run {run_id}")
+    validator = target / ".toscanini" / "bin" / "toscanini_contract.py"
+    result = subprocess.run([sys.executable, str(validator), "--run-id", run_id], cwd=target, check=False)
+    if result.returncode:
+        print("BLOCKED: execution contract or required specification approvals are invalid.", file=sys.stderr)
+        return result.returncode
+    print("Execution contract gate: approved")
     command, _ = detect_verify(target)
     if not command:
         print("No canonical verification command detected.", file=sys.stderr)

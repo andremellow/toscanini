@@ -45,6 +45,85 @@ def execution_contract(run_id: str, assurance: str = "standard") -> dict:
 
 
 class WorkflowTests(unittest.TestCase):
+    def test_verify_requires_approved_generic_contract_before_command(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder)
+            (target / "package.json").write_text(json.dumps({"scripts": {"verify": "touch verified"}}))
+            self.assertEqual(run(INSTALL, target).returncode, 0)
+            verify = ROOT / "scripts/verify"
+            self.assertNotEqual(run(verify, target).returncode, 0)
+            self.assertNotEqual(run(verify, target, "--run-id", "selected").returncode, 0)
+            path = target / ".toscanini/runtime/runs/selected/execution-contract.json"
+            path.parent.mkdir(parents=True)
+            contract = execution_contract("selected")
+            contract["approved"] = False
+            path.write_text(json.dumps(contract))
+            self.assertNotEqual(run(verify, target, "--run-id", "selected").returncode, 0)
+            self.assertFalse((target / "verified").exists())
+            contract["approved"] = True
+            path.write_text(json.dumps(contract))
+            self.assertEqual(run(verify, target, "--run-id", "selected").returncode, 0)
+            self.assertTrue((target / "verified").exists())
+
+    def test_verify_honors_laravel_opt_out_and_removal(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder)
+            (target / "artisan").write_text("")
+            (target / "composer.json").write_text(json.dumps({"require": {"laravel/framework": "^13.0"}}))
+            (target / "package.json").write_text(json.dumps({"scripts": {"verify": "touch verified"}}))
+            self.assertEqual(run(INSTALL, target).returncode, 0)
+            path = target / ".toscanini/runtime/runs/run/execution-contract.json"
+            path.parent.mkdir(parents=True)
+            path.write_text(json.dumps(execution_contract("run")))
+            verify = ROOT / "scripts/verify"
+            self.assertEqual(run(verify, target, "--run-id", "run").returncode, 0)
+            self.assertEqual(run(INSTALL, target, "--laravel", "--laravel-boost-policy", "required").returncode, 0)
+            self.assertNotEqual(run(verify, target, "--run-id", "run").returncode, 0)
+            self.assertEqual(run(INSTALL, target, "--laravel-boost-policy", "required").returncode, 0)
+            self.assertEqual(run(verify, target, "--run-id", "run").returncode, 0)
+
+    def test_ledger_references_must_exist_in_frozen_contract(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder)
+            self.assertEqual(run(INSTALL, target).returncode, 0)
+            base = target / ".toscanini/runtime/runs/run"
+            base.mkdir(parents=True)
+            (base / "execution-contract.json").write_text(json.dumps(execution_contract("run")))
+            checker = target / ".toscanini/bin/toscanini_contract.py"
+            for basis, field, valid, invalid in [
+                ("acceptance-criterion", "acceptanceCriteria", ["AC-01"], ["AC-NOT-IN-CONTRACT"]),
+                ("invariant", "invariants", ["INV-01"], ["INV-NOT-IN-CONTRACT"]),
+                ("direct-regression", "regressionSurface", "Changed behavior", "Unrelated behavior"),
+            ]:
+                with self.subTest(basis=basis):
+                    item = {"id": "F-01", "sourceRole": "qa", "failureStage": "implementation",
+                            "classification": "IMPLEMENTATION_DEVIATION", "scope": "in-contract",
+                            "severity": "blocking", "status": "resolved", "basis": basis,
+                            "acceptanceCriteria": ["AC-01"], "invariants": [],
+                            "summary": "Defect", "evidence": "Reproduced", "requiredOutcome": "Fixed",
+                            "discoveredRound": 1, "discoveredPhase": "qa"}
+                    for reference, expected in [(valid, 0), (invalid, 1)]:
+                        item[field] = reference
+                        (base / "finding-ledger.json").write_text(json.dumps({"runId": "run", "findings": [item]}))
+                        result = subprocess.run(["python3", str(checker), "--run-id", "run", "--completion"], cwd=target, capture_output=True, text=True)
+                        self.assertEqual(result.returncode, expected, result.stdout)
+                        if expected:
+                            self.assertIn("outside the frozen contract", result.stdout)
+
+    def test_legacy_migration_installs_specification_reviewer(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder)
+            legacy = target / ".power-dev-workflow"
+            legacy.mkdir()
+            (legacy / "manifest.json").write_text(json.dumps({"configuration": {"agents": ["architect", "test-expert"], "adapters": ["spec-kit"]}, "files": {}}))
+            (target / "AGENTS.md").write_text("User rules\n<!-- power-dev-workflow:start -->\nLegacy\n<!-- power-dev-workflow:end -->\n")
+            result = run(ROOT / "scripts/migrate-legacy-install.py", target)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            for agent in ("specification-reviewer", "test-analyst"):
+                self.assertTrue((target / f".codex/agents/{agent}.toml").exists())
+            self.assertFalse((target / ".codex/agents/design-agent.toml").exists())
+            self.assertIn("User rules", (target / "AGENTS.md").read_text())
+
     def test_empty_repository_install_and_idempotency(self):
         with tempfile.TemporaryDirectory() as folder:
             target = Path(folder)

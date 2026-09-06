@@ -144,7 +144,7 @@ def validate_contract(contract: dict, run_id: str, spec_kit_enabled: bool | None
     return findings
 
 
-def validate_ledger(ledger: dict, run_id: str, completion: bool = False) -> list[str]:
+def validate_ledger(ledger: dict, run_id: str, completion: bool = False, contract: dict | None = None) -> list[str]:
     if not ledger:
         return []
     findings: list[str] = []
@@ -175,6 +175,18 @@ def validate_ledger(ledger: dict, run_id: str, completion: bool = False) -> list
             findings.append(f"blocking finding lacks an approved blocking basis: {identifier}")
         if item.get("basis") == "direct-regression" and not str(item.get("regressionSurface", "")).strip():
             findings.append(f"direct-regression finding must name the affected frozen regression surface: {identifier}")
+        if item.get("scope") == "in-contract":
+            approved = contract or {}
+            for field in ("acceptanceCriteria", "invariants"):
+                allowed = {entry["id"] for entry in approved.get(field, []) if isinstance(entry, dict) and isinstance(entry.get("id"), str)}
+                references = item.get(field, [])
+                if not isinstance(references, list) or any(not isinstance(ref, str) or ref not in allowed for ref in references):
+                    findings.append(f"finding {identifier} cites {field} outside the frozen contract")
+            basis_field = {"acceptance-criterion": "acceptanceCriteria", "invariant": "invariants"}.get(item.get("basis"))
+            if item.get("severity") == "blocking" and basis_field and not item.get(basis_field):
+                findings.append(f"blocking finding {identifier} must cite its {basis_field} basis")
+            if item.get("basis") == "direct-regression" and item.get("regressionSurface") not in approved.get("validationScope", {}).get("regressionSurfaces", []):
+                findings.append(f"finding {identifier} cites a regression surface outside the frozen contract")
         if not isinstance(item.get("discoveredRound"), int) or item.get("discoveredRound", 0) < 1:
             findings.append(f"finding must record its discovery round: {identifier}")
         if not str(item.get("discoveredPhase", "")).strip():
@@ -206,8 +218,9 @@ def main() -> int:
     root = Path.cwd()
     contract_file = Path(args.contract) if args.contract else contract_path(root, args.run_id)
     ledger_file = Path(args.ledger) if args.ledger else ledger_path(root, args.run_id)
-    findings = validate_contract(read_json(contract_file), args.run_id, project_spec_kit_enabled(root))
-    findings += validate_ledger(read_json(ledger_file), args.run_id, args.completion)
+    contract = read_json(contract_file)
+    findings = validate_contract(contract, args.run_id, project_spec_kit_enabled(root))
+    findings += validate_ledger(read_json(ledger_file), args.run_id, args.completion, contract=contract)
     print(json.dumps({"runId": args.run_id, "approved": not findings, "findings": findings}, indent=2))
     return 1 if findings else 0
 

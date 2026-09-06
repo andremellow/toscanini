@@ -14,7 +14,7 @@ The terminal UI reads privacy-safe lifecycle telemetry emitted by the installed 
 
 Use `--with-adapter auto` to opt into every adapter supported by evidence in the target repository. Detection alone never enables an adapter.
 
-For a Spec Kit project, finish a run with `toscanini verify --run-id <run-id>`. Toscanini validates the exact execution contract before running tests, so a missing or unapproved specification, clarification, or plan blocks delivery instead of becoming a hidden warning.
+For every installed project, finish a run with `toscanini verify --run-id <run-id>`. Toscanini requires an explicit run ID and validates the exact approved execution contract before running tests, including in generic projects. Spec Kit-specific approvals apply when required by that contract. Laravel checks apply only when its adapter is enabled.
 
 ## Community extensions
 

@@ -66,7 +66,7 @@ def main() -> int:
     if args.require_contract:
         contract = read_json(contract_path(root, args.run_id))
         findings.extend(validate_contract(contract, args.run_id, project_spec_kit_enabled(root)))
-        findings.extend(validate_ledger(read_json(ledger_path(root, args.run_id)), args.run_id, completion=True))
+        findings.extend(validate_ledger(read_json(ledger_path(root, args.run_id)), args.run_id, completion=True, contract=contract))
         if contract.get("architecture", {}).get("required"):
             required["architecture-reviewer"] = OPTIONAL_GATES["architecture-reviewer"]
         if contract.get("specification", {}).get("required"):
