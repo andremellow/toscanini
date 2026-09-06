@@ -3,7 +3,8 @@
   "architecture-reviewer",
   "design-agent",
   "design-reviewer",
-  "test-expert",
+  "specification-reviewer",
+  "test-analyst",
   "qa",
   "code-reviewer"
 ]

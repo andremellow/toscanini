@@ -9,7 +9,9 @@ import { createInterface } from "node:readline/promises";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const workflow = resolve(root, "scripts", "workflow.py");
+const cliVersion = readFileSync(resolve(root, "VERSION"), "utf8").trim();
 const builtInAdapters = ["laravel", "spec-kit", "terminal-ui"];
+const assuranceLevels = ["fast", "standard", "critical"];
 const builtInAgents = [
   "architect",
   "architecture-reviewer",
@@ -17,13 +19,16 @@ const builtInAgents = [
   "design-agent",
   "design-reviewer",
   "qa",
-  "test-expert",
+  "specification-reviewer",
+  "test-analyst",
 ];
 
 function usage() {
   console.log(`Toscanini
 
 Usage:
+  toscanini --version
+  toscanini version [--target PATH]
   toscanini init [--yes] [--target PATH]
   toscanini adapter add <name> [--target PATH] [--dry-run]
   toscanini adapter remove <name> [--target PATH] [--dry-run]
@@ -32,9 +37,13 @@ Usage:
   toscanini agent disable <name> [--target PATH] [--dry-run]
   toscanini agent list [--target PATH]
   toscanini agent select [--target PATH] [--dry-run]
+  toscanini assurance [fast|standard|critical] [--target PATH] [--dry-run]
+  toscanini laravel boost [optional|required] [--target PATH] [--dry-run]
   toscanini ui [--target PATH]
+  toscanini analyze [--target PATH]
   toscanini inspect [--target PATH]
   toscanini doctor [--target PATH]
+  toscanini verify [--target PATH] [--run-id ID]
   toscanini update [--target PATH] [--dry-run]
 
 Built-in adapters: ${builtInAdapters.join(", ")}
@@ -45,17 +54,20 @@ The target defaults to the current directory.`);
 
 function parse(argv) {
   const positional = [];
-  const options = { target: ".", dryRun: false, yes: false };
+  const options = { target: ".", dryRun: false, yes: false, runId: null };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
     if (value === "--target") options.target = argv[++index];
+    else if (value === "--run-id") options.runId = argv[++index];
     else if (value === "--dry-run") options.dryRun = true;
     else if (value === "--yes" || value === "-y") options.yes = true;
+    else if (value === "--version" || value === "-v") options.version = true;
     else if (value === "--help" || value === "-h") options.help = true;
     else if (value.startsWith("-")) throw new Error(`Unknown option: ${value}`);
     else positional.push(value);
   }
   if (!options.target) throw new Error("--target requires a path");
+  if (argv.includes("--run-id") && !options.runId) throw new Error("--run-id requires an ID");
   return { positional, options: { ...options, target: resolve(options.target) } };
 }
 
@@ -79,14 +91,30 @@ function manifest(target) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
+function showVersion(target, short = false) {
+  if (short) {
+    console.log(cliVersion);
+    return;
+  }
+  const installedVersion = manifest(target)?.version;
+  console.log(`Toscanini CLI: ${cliVersion}`);
+  console.log(`Project: ${installedVersion ?? "not installed"}`);
+  if (!installedVersion) console.log("Status: Toscanini is not installed in this project");
+  else if (installedVersion === cliVersion) console.log("Status: current");
+  else console.log("Status: project update required");
+}
+
 function configuration(target) {
   const installed = manifest(target);
   if (!installed) throw new Error(`Toscanini is not installed in ${target}. Run 'toscanini init' first.`);
   const current = installed.configuration ?? {};
+  const configuredAgents = (current.agents ?? builtInAgents).map((agent) => agent === "test-expert" ? "test-analyst" : agent);
   return {
     adapters: [...(current.adapters ?? [])],
-    agents: [...(current.agents ?? builtInAgents)],
+    agents: [...new Set(configuredAgents)],
     extensions: [...(current.extensions ?? [])],
+    assurance: current.assurance ?? "standard",
+    laravelBoost: current.laravelBoost ?? "optional",
   };
 }
 
@@ -97,6 +125,8 @@ function installationArgs(config, dryRun = false) {
     if (!config.agents.includes(agent)) args.push("--without-agent", agent);
   }
   for (const extension of config.extensions) args.push("--extension", extension);
+  args.push("--assurance", config.assurance ?? "standard");
+  args.push("--laravel-boost-policy", config.laravelBoost ?? "optional");
   if (dryRun) args.push("--dry-run");
   return args;
 }
@@ -201,6 +231,7 @@ function terminalSnapshot(target, frame = 0) {
   ], width));
   output.push(...panel("MODULES", [
     `${paint("CORE", ansi.cyan)}          ${paint("ENABLED", ansi.green)}`,
+    `${paint("ASSURANCE", ansi.dim)}     ${paint((config.assurance ?? "standard").toUpperCase(), ansi.cyan)}`,
     `${paint("INTERFACE", ansi.dim)}     terminal-ui`,
     `${paint("ADAPTERS", ansi.dim)}      ${adapters.length ? adapters.join(" · ") : "none"}`,
     `${paint("EXTENSIONS", ansi.dim)}    ${config.extensions?.length ? config.extensions.map((item) => basename(item)).join(" · ") : "none"}`,
@@ -210,7 +241,9 @@ function terminalSnapshot(target, frame = 0) {
         `${paint("●", ansi.green)} Local workflow telemetry`,
         ...telemetry.events.map((event) => {
           const time = event.timestamp?.slice(11, 19) || "--:--:--";
-          return `${paint(time, ansi.dim)} ${paint(roleKey(event.role), ansi.cyan)} · ${event.summary}`;
+          const phase = event.phase ? ` · ${event.phase}${Number.isInteger(event.round) ? ` r${event.round}` : ""}` : "";
+          const findings = Number.isInteger(event.findingCount) ? ` · ${event.findingCount} finding${event.findingCount === 1 ? "" : "s"}` : "";
+          return `${paint(time, ansi.dim)} ${paint(roleKey(event.role), ansi.cyan)}${phase}${findings} · ${event.summary}`;
         }),
       ]
     : [
@@ -300,8 +333,10 @@ async function init(target, options) {
   const detected = inspect(target);
   const installed = manifest(target)?.configuration;
   const adapters = [...(installed?.adapters ?? [])];
-  const agents = [...(installed?.agents ?? builtInAgents)];
+  const agents = [...new Set((installed?.agents ?? builtInAgents).map((agent) => agent === "test-expert" ? "test-analyst" : agent))];
   const extensions = [...(installed?.extensions ?? [])];
+  const assurance = installed?.assurance ?? "standard";
+  let laravelBoost = installed?.laravelBoost ?? "optional";
   console.log(`\nToscanini setup\nTarget: ${target}`);
   console.log(`Detected: ${[
     detected.laravel.detected ? `Laravel ${detected.laravel.framework ?? ""}`.trim() : null,
@@ -319,6 +354,9 @@ async function init(target, options) {
       const specKit = await confirm(rl, "Enable the Spec Kit adapter?", adapters.includes("spec-kit") || detected.specKit);
       const terminalUi = await confirm(rl, "Enable the terminal command center?", adapters.includes("terminal-ui"));
       adapters.splice(0, adapters.length, ...[...(laravel ? ["laravel"] : []), ...(specKit ? ["spec-kit"] : []), ...(terminalUi ? ["terminal-ui"] : [])]);
+      if (laravel && detected.laravel.detected && !detected.laravel.boost) {
+        laravelBoost = await confirm(rl, "Require Laravel Boost before delivery?", false) ? "required" : "optional";
+      }
     } finally {
       rl.close();
     }
@@ -326,7 +364,7 @@ async function init(target, options) {
     agents.splice(0, agents.length, ...selectedAgents);
   }
 
-  const config = { adapters: [...new Set(adapters)].sort(), agents, extensions };
+  const config = { adapters: [...new Set(adapters)].sort(), agents, extensions, assurance, laravelBoost };
   if (!options.yes && process.stdin.isTTY) {
     console.log("\nPlanned changes:");
     const preview = python("install", target, installationArgs(config, true), true);
@@ -367,14 +405,45 @@ async function selectAgents(target, dryRun) {
   if (result.status !== 0) process.exitCode = result.status;
 }
 
+function assurance(target, level, dryRun) {
+  const config = configuration(target);
+  if (!level) {
+    console.log(config.assurance);
+    return;
+  }
+  if (!assuranceLevels.includes(level)) {
+    throw new Error(`Unknown assurance level: ${level}. Choose ${assuranceLevels.join(", ")}.`);
+  }
+  config.assurance = level;
+  const result = python("install", target, installationArgs(config, dryRun));
+  if (result.status !== 0) process.exitCode = result.status;
+}
+
+function laravelBoost(target, policy, dryRun) {
+  const config = configuration(target);
+  if (!policy) {
+    console.log(config.laravelBoost);
+    return;
+  }
+  if (!["optional", "required"].includes(policy)) {
+    throw new Error("Laravel Boost policy must be optional or required.");
+  }
+  config.laravelBoost = policy;
+  const result = python("install", target, installationArgs(config, dryRun));
+  if (result.status !== 0) process.exitCode = result.status;
+}
+
 async function main() {
   const { positional, options } = parse(process.argv.slice(2));
+  if (options.version) return showVersion(options.target, true);
   if (options.help || positional.length === 0) return usage();
   const [command, action, name] = positional;
+  if (command === "version" && !action) return showVersion(options.target);
   if (command === "init") return init(options.target, options);
   if (command === "ui") return ui(options.target);
-  if (command === "inspect" || command === "doctor" || command === "update") {
+  if (command === "analyze" || command === "inspect" || command === "doctor" || command === "update" || command === "verify") {
     const extra = options.dryRun ? ["--dry-run"] : [];
+    if (command === "verify" && options.runId) extra.push("--run-id", options.runId);
     const result = python(command, options.target, extra);
     if (result.status !== 0) process.exitCode = result.status;
     return;
@@ -390,6 +459,8 @@ async function main() {
     return;
   }
   if (command === "agent" && action === "select") return selectAgents(options.target, options.dryRun);
+  if (command === "assurance" && !name) return assurance(options.target, action, options.dryRun);
+  if (command === "laravel" && action === "boost") return laravelBoost(options.target, name, options.dryRun);
   if (command === "adapter" && ["add", "remove"].includes(action) && name) return reconfigure(options.target, command, action, name, options.dryRun);
   if (command === "agent" && ["enable", "disable"].includes(action) && name) return reconfigure(options.target, command, action, name, options.dryRun);
   throw new Error(`Invalid command: ${positional.join(" ")}`);
