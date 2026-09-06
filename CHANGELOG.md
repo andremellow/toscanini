@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Tune the Spec Kit adapter for unlimited material clarification, concrete rule scenarios, and scenario-to-test evidence without additional mandatory review loops.
+- Add optional pre-implementation discovery to Test Analyst and preserve upstream Spec Kit commands.
+
 - Replaced unlimited critical-assurance loops with a two-batch, 18-specialist stop-and-replan budget.
 - Added an explainable execution-efficiency score based on elapsed/baseline ratio, repeated starts, remediation batches, late findings, and scope drift.
 - Separated the specialist that detects a finding from the workflow stage that should have prevented it.

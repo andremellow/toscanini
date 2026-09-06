@@ -126,6 +126,44 @@ class WorkflowTests(unittest.TestCase):
             self.assertEqual(run(INSTALL, target, "--spec-kit").returncode, 0)
             self.assertTrue((target / ".specify" / "templates" / "architecture.md").exists())
 
+    def test_spec_discovery_policy_lifecycle_preserves_upstream_and_laravel(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder)
+            upstream = target / ".specify/templates/commands/clarify.md"
+            upstream.parent.mkdir(parents=True)
+            upstream.write_text("User-owned upstream command")
+            scenarios = target / "specs/feature/scenarios.md"
+            scenarios.parent.mkdir(parents=True)
+            scenarios.write_text("User-approved behavior")
+            self.assertEqual(run(INSTALL, target, "--laravel").returncode, 0)
+            self.assertNotIn("### Spec Kit behavior and test discovery", (target / "AGENTS.md").read_text())
+            self.assertEqual(run(INSTALL, target, "--laravel", "--spec-kit").returncode, 0)
+            installed = target / ".specify/templates/toscanini-scenarios.md"
+            self.assertTrue(installed.exists())
+            self.assertIn("### Spec Kit behavior and test discovery", (target / "AGENTS.md").read_text())
+            self.assertNotIn("{{SPEC_KIT_POLICY}}", (target / "AGENTS.md").read_text())
+            first = (target / "AGENTS.md").read_bytes()
+            self.assertEqual(run(ROOT / "scripts/update-project", target).returncode, 0)
+            self.assertEqual(first, (target / "AGENTS.md").read_bytes())
+            self.assertEqual(run(INSTALL, target, "--laravel").returncode, 0)
+            self.assertFalse(installed.exists())
+            self.assertNotIn("### Spec Kit behavior and test discovery", (target / "AGENTS.md").read_text())
+            self.assertEqual(upstream.read_text(), "User-owned upstream command")
+            self.assertEqual(scenarios.read_text(), "User-approved behavior")
+            config = json.loads((target / ".toscanini/manifest.json").read_text())["configuration"]
+            self.assertEqual(config["adapters"], ["laravel"])
+
+    def test_spec_scenario_template_customization_is_protected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder)
+            self.assertEqual(run(INSTALL, target, "--spec-kit").returncode, 0)
+            template = target / ".specify/templates/toscanini-scenarios.md"
+            template.write_text("Custom scenario contract")
+            result = run(ROOT / "scripts/update-project", target)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(template.read_text(), "Custom scenario contract")
+            self.assertIn("toscanini-scenarios.md", result.stdout)
+
     def test_agents_can_be_disabled(self):
         with tempfile.TemporaryDirectory() as folder:
             target = Path(folder)

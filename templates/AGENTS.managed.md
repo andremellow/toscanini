@@ -64,4 +64,5 @@ The execution report includes a directional efficiency score with visible deduct
 Preserve existing project instructions and load installed Toscanini skills when their procedures apply.
 
 Before declaring delivery complete, run `toscanini verify --run-id <run-id>`. This is the visible project exit gate: it validates required Spec Kit approvals, reports Laravel Boost status and policy, then runs the repository's canonical verification command. Do not bypass a failing preflight.
+{{SPEC_KIT_POLICY}}
 <!-- toscanini:end -->

@@ -148,6 +148,7 @@ def analyze(target: Path) -> int:
 
 def rendered_agents(inspection: dict, adapters: list[str], agents: list[str], extensions: list[Path], assurance: str, laravel_boost_policy: str) -> bytes:
     text = (ROOT / "templates" / "AGENTS.managed.md").read_text(encoding="utf-8")
+    spec_kit_policy = (ROOT / "templates" / "adapters" / "spec-kit-policy.md").read_text(encoding="utf-8") if "spec-kit" in adapters else ""
     verify = inspection["verification"]["canonical"] or "Not configured; see .toscanini/gaps.md"
     design = inspection["designSystemCandidates"][0] if len(inspection["designSystemCandidates"]) == 1 else "Not configured; resolve with the project owner when UI work begins"
     adapter_text = ", ".join(adapters) if adapters else "none (core workflow only)"
@@ -156,6 +157,7 @@ def rendered_agents(inspection: dict, adapters: list[str], agents: list[str], ex
     return (text.replace("{{VERIFY_COMMAND}}", verify)
         .replace("{{DESIGN_SYSTEM_REFERENCE}}", design)
         .replace("{{ADAPTERS}}", adapter_text)
+        .replace("{{SPEC_KIT_POLICY}}", spec_kit_policy)
         .replace("{{AGENTS}}", agent_text)
         .replace("{{ASSURANCE}}", assurance)
         .replace("{{LARAVEL_BOOST_POLICY}}", laravel_boost_policy)
