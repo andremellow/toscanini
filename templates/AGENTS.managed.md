@@ -64,5 +64,9 @@ The execution report includes a directional efficiency score with visible deduct
 Preserve existing project instructions and load installed Toscanini skills when their procedures apply.
 
 Before declaring delivery complete, run `toscanini verify --run-id <run-id>`. This is the visible project exit gate: it validates required Spec Kit approvals, reports Laravel Boost status and policy, then runs the repository's canonical verification command. Do not bypass a failing preflight.
+### Document reading handoff
+
+When the user requests a readable report of generated documents, use `.toscanini/templates/document-report.json` to list the actual Markdown files, titles and order for that feature. Paths are relative to the target project. Run `toscanini report --manifest <manifest> --target <project>`; use `--serve` for a local browser URL and retain the process while the user reads. Report the actual file or URL returned. Increment the version for changed documents and retain the report ID and stable document IDs. Do not claim a local URL is remotely published. Reading is not approval and test plans are not execution evidence.
+
 {{SPEC_KIT_POLICY}}
 <!-- toscanini:end -->

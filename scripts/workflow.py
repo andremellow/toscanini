@@ -224,7 +224,7 @@ def desired_files(target: Path, inspection: dict, adapters: list[str], agents: l
         desired[target / ".toscanini" / "bin" / runtime_tool.name] = runtime_tool.read_bytes()
     for contract_template in (ROOT / "templates" / "contracts").glob("*.json"):
         desired[target / ".toscanini" / "templates" / contract_template.name] = contract_template.read_bytes()
-    desired[target / ".toscanini" / ".gitignore"] = b"runtime/\n"
+    desired[target / ".toscanini" / ".gitignore"] = b"runtime/\nreports/\n"
     if "spec-kit" in adapters:
         for source in (ROOT / "templates" / "specs").glob("*.md"):
             desired[target / ".specify" / "templates" / source.name] = source.read_bytes()

@@ -288,3 +288,7 @@ A Homebrew formula will follow versioned releases through the community tap:
 ```sh
 brew install andremellow/tap/toscanini
 ```
+
+## Readable document reports
+
+Generate a versioned reader from a manifest of actual project Markdown files with `toscanini report --manifest report.json --serve`. Each version retains its documents and ordering. See [document reports](docs/document-reports.md) for the manifest and agent handoff.

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add manifest-driven document reports with immutable Markdown snapshots, document/version navigation, sandboxed rendering and optional loopback serving.
+
 - Validate selected execution contracts in generic projects, respect Laravel adapter opt-outs, reject ledger references outside the frozen contract, and install Specification Reviewer during legacy migration.
 
 - Tune the Spec Kit adapter for unlimited material clarification, concrete rule scenarios, and scenario-to-test evidence without additional mandatory review loops.

@@ -27,6 +27,7 @@ function usage() {
   console.log(`Toscanini
 
 Usage:
+  toscanini report --manifest PATH [--target PATH] [--serve] [--port PORT]
   toscanini --version
   toscanini version [--target PATH]
   toscanini init [--yes] [--target PATH]
@@ -434,6 +435,10 @@ function laravelBoost(target, policy, dryRun) {
 }
 
 async function main() {
+  if (process.argv[2] === "report") {
+    const { reportCommand } = await import("./report.mjs");
+    return reportCommand(process.argv.slice(3));
+  }
   const { positional, options } = parse(process.argv.slice(2));
   if (options.version) return showVersion(options.target, true);
   if (options.help || positional.length === 0) return usage();
