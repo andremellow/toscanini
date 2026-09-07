@@ -55,7 +55,7 @@ test('rejects traversal, input symlinks outside the project and output symlinks'
 });
 test('Markdown supports tables and code but disables raw HTML, scripts, images and unsafe links',()=>{
   const html=renderMarkdown('# Heading\n\n<script>alert(1)</script>\n\n[bad](javascript:alert(1))\n\n![tracking](https://example.com/pixel)\n\n| A | B |\n| --- | --- |\n| X | Y |\n\n```js\nconst x = 1;\n```');
-  assert.match(html,/<table>/);assert.match(html,/<pre><code/);assert.match(html,/section-1/);
+  assert.match(html,/<table>/);assert.match(html,/<pre><code/);assert.match(html,/id="heading"/);
   assert.doesNotMatch(html,/<script|<img|href="javascript:/);assert.match(html,/&lt;script&gt;/);
 });
 test('server exposes only the generated HTML on loopback',async t=>{
@@ -65,4 +65,17 @@ test('server exposes only the generated HTML on loopback',async t=>{
   const response=await fetch(url);assert.equal(response.status,200);assert.match(await response.text(),/Specification/);
   assert.equal((await fetch(url+'/report.json')).status,404);
   assert.equal((await fetch(url,{method:'POST'})).status,404);
+});
+
+test('Markdown fragment links target stable headings, including duplicates and Unicode',()=>{
+  const markdown = '[Scenarios](#scenarios) / [Again](#scenarios-1) / [Ações](#ações) / [Encoded](#a%C3%A7%C3%B5es)\n\n## Scenarios\n\n## Scenarios\n\n## Ações\n\n## **Copy** `course`\n';
+  const html=renderMarkdown(markdown);
+  for (const id of ['scenarios','scenarios-1','ações','copy-course']) {
+    assert.ok(html.includes(`id="${id}"`));
+    assert.ok(html.includes(`href="about:srcdoc#${id}"`));
+  }
+  assert.ok(html.includes('href="about:srcdoc#a%C3%A7%C3%B5es"'));
+  const withEarlierHeading=renderMarkdown('# Introduction\n\n'+markdown);
+  assert.ok(withEarlierHeading.includes('id="scenarios"'));
+  assert.ok(renderMarkdown('## Scenarios').includes('id="scenarios"'));
 });

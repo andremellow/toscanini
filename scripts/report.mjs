@@ -5,6 +5,7 @@ import { createServer } from 'node:http';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { Marked } from 'marked';
+import GithubSlugger from 'github-slugger';
 
 const templateRoot = fileURLToPath(new URL('../templates/report/', import.meta.url));
 const MAX_DOCUMENT = 2 * 1024 * 1024;
@@ -63,18 +64,22 @@ export function loadManifest(target, manifestPath) {
   return result;
 }
 export function renderMarkdown(markdown) {
-  let index = 0; const headings = [];
+  const slugger = new GithubSlugger(); const headings = [];
+  const plainText = tokens => tokens.map(token => token.tokens ? plainText(token.tokens) : token.text || "").join("");
   const parser = new Marked({ gfm: true, renderer: {
     html({ text }) { return escape(text); },
     image({ text }) { return `<span>[Image: ${escape(text)}]</span>`; },
     link({ href, tokens }) {
       const label = this.parser.parseInline(tokens);
-      if (!/^(https?:\/\/|mailto:|#[a-zA-Z0-9_-]+$)/i.test(href)) return label;
-      return `<a href="${escape(href)}" rel="noreferrer noopener">${label}</a>`;
+      if (!/^(https?:\/\/|mailto:|#)/i.test(href)) return label;
+      // srcdoc otherwise resolves fragments against the parent reader URL.
+      return `<a href="${escape(href.startsWith("#") ? "about:srcdoc" + href : href)}" rel="noreferrer noopener">${label}</a>`;
     },
     heading({ tokens, depth }) {
-      const label = this.parser.parseInline(tokens); const id = `section-${++index}`;
-      headings.push(`<li><a href="#${id}">${label}</a></li>`);
+      const label = this.parser.parseInline(tokens);
+      const plain = plainText(tokens);
+      const id = escape(slugger.slug(plain));
+      headings.push(`<li><a href="about:srcdoc#${id}">${escape(plain)}</a></li>`);
       return `<h${depth} id="${id}">${label}</h${depth}>`;
     }
   }});

@@ -39,7 +39,7 @@ Keep the process alive while reading. It prints an available loopback URL; `--po
 
 Use the same reportId and increment the integer version whenever documents change. Generation snapshots the selected Markdown and its SHA-256 hashes under `versions/`. Existing versions cannot be overwritten. The latest reader includes all snapshots, and its selector switches the document set, titles and contents together. Previously generated files remain historical copies. Keep stable document IDs to retain document selection across versions.
 
-Links such as `index.html#version=2&document=scenarios` select a specific version and document. Unknown versions or documents fall back to the latest version or its first document. The reader supports headings, an in-document table of contents, tables, lists, checkboxes, blockquotes and fenced code. Native browser search works inside the document frame. Navigation labels are English; document text retains its original language.
+Links such as `index.html#version=2&document=scenarios` select a specific version and document. Unknown versions or documents fall back to the latest version or its first document. Heading fragments use GitHub-style slugs (for example, `#scenarios`), with numeric suffixes for duplicates and Unicode support. Fragments navigate within the sandboxed document. The reader supports headings, an in-document table of contents, tables, lists, checkboxes, blockquotes and fenced code. Native browser search works inside the document frame. Navigation labels are English; document text retains its original language.
 
 ## Boundaries
 

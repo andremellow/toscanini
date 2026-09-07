@@ -43,6 +43,7 @@
     "test:cli": "node --test tests/*.test.mjs"
   },
   "dependencies": {
+    "github-slugger": "2.0.0",
     "marked": "15.0.12"
   }
 }
