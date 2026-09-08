@@ -24,6 +24,10 @@ def execution_contract(run_id: str, assurance: str = "standard") -> dict:
     return {
         "schemaVersion": 3,
         "approvedBy": "product-owner",
+        "readiness": {"scopeId": "scope-1", "environment": "temporary test project",
+                      "checks": [{"category": category, "name": category, "status": "not-required",
+                                  "evidence": "Fixture exercises local contract validation without external prerequisites"}
+                                 for category in ("runtimes", "dependencies", "access", "services", "verification", "permissions")]},
         "runId": run_id,
         "assurance": assurance,
         "goal": "Deliver the accepted behavior",

@@ -43,3 +43,7 @@ Every completion-gate attempt writes `.toscanini/runtime/runs/<run-id>/execution
 Material findings may include a reusable learning proposal and its intended policy, adapter, agent, or workflow target. Proposals start as `pending`. Toscanini reports them but never applies them automatically; acceptance and application require an explicit user decision and a separate change.
 
 See [architecture workflow](architecture-workflow.md) for schema v3 product-owner approval, author telemetry and final conformance evidence. Historical v2 runs remain readable with their recorded budgets.
+
+## Execution readiness
+
+Before Worker dispatch, complete the [execution readiness assessment](../skills/toscanini-workflow/references/execution-readiness.md) in the contract. Required installations, registry/licence access, services, verification prerequisites and user actions must be resolved in the Worker environment. Architecture approval alone does not mean execution is ready. This applies to new schema v3 contracts; historical v2 contracts remain readable.

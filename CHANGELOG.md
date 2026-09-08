@@ -2,6 +2,8 @@
 
 ## 0.9.0
 
+- Check execution prerequisites during planning and gate Worker start on resolved, evidenced dependencies, access, services, verification and permissions. Preserve architecture-only approval independently of operational readiness.
+
 - Require per-repository framework/reference suitability evidence and explicit decisions for material deviations before architecture approval; consult available Laravel Boost guidance and keep TDD strategy separate.
 
 - Move architecture approval directly to the product owner; retire the document reviewer, add Architect conformance after QA and migrate existing installations.

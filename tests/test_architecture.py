@@ -63,6 +63,12 @@ class ArchitectureTests(unittest.TestCase):
             result = self.check(program, *args)
             self.assertTrue(result['approved'], result)
 
+    def test_architecture_approval_does_not_require_operational_readiness(self):
+        self.contract['implementationCheckpoint']['recordedAfterImplementation'] = False
+        del self.contract['readiness']
+        self.assertTrue(self.check('toscanini-gate.py', '--require-architecture')['approved'])
+        self.assertFalse(self.check('toscanini_contract.py')['approved'])
+
     def test_completed_feature_needs_no_document_reviewer_or_second_code_review(self):
         self.implemented()
         result = self.check('toscanini-gate.py', '--require-architecture', '--require-contract')

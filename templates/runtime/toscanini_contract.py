@@ -46,6 +46,44 @@ def project_spec_kit_enabled(root: Path) -> bool:
     return "spec-kit" in manifest.get("configuration", {}).get("adapters", [])
 
 
+READINESS_CATEGORIES = {'runtimes', 'dependencies', 'access', 'services', 'verification', 'permissions'}
+
+
+def validate_readiness(contract: dict) -> list[str]:
+    # Historical contracts remain auditable; new runs must record concrete preparation.
+    if contract.get('schemaVersion') == 2:
+        return []
+    readiness = contract.get('readiness')
+    if not isinstance(readiness, dict):
+        return ['missing execution readiness assessment']
+    findings = []
+    if not readiness.get('scopeId') or readiness.get('scopeId') != contract.get('validationScope', {}).get('scopeId'):
+        findings.append('execution readiness does not match the frozen scope')
+    if not isinstance(readiness.get('environment'), str) or not readiness['environment'].strip():
+        findings.append('execution readiness must identify the Worker environment')
+    checks = readiness.get('checks')
+    if not isinstance(checks, list):
+        return findings + ['missing execution readiness checks']
+    covered = set()
+    for check in checks:
+        if not isinstance(check, dict):
+            findings.append('invalid execution readiness check')
+            continue
+        category = check.get('category')
+        if not isinstance(category, str) or category not in READINESS_CATEGORIES:
+            findings.append('unknown execution readiness category')
+            continue
+        covered.add(category)
+        # Never echo evidence or dependency names: they could accidentally contain secrets.
+        if check.get('status') not in {'verified', 'not-required'}:
+            findings.append(f'execution prerequisite is unresolved: {category}')
+        if any(not isinstance(check.get(key), str) or not check[key].strip() for key in ('name', 'evidence')):
+            findings.append(f'execution prerequisite needs a name and nonsecret evidence: {category}')
+    for category in sorted(READINESS_CATEGORIES - covered):
+        findings.append(f'missing execution readiness category: {category}')
+    return findings
+
+
 def validate_contract(contract: dict, run_id: str, spec_kit_enabled: bool | None = None) -> list[str]:
     findings: list[str] = []
     if not contract:
@@ -259,6 +297,7 @@ def main() -> int:
     ledger_file = Path(args.ledger) if args.ledger else ledger_path(root, args.run_id)
     contract = read_json(contract_file)
     findings = validate_contract(contract, args.run_id, project_spec_kit_enabled(root))
+    findings += validate_readiness(contract)
     findings += validate_ledger(read_json(ledger_file), args.run_id, args.completion, contract=contract)
     from toscanini_architecture import validate_architecture, architecture_events
     findings += validate_architecture(root, contract, architecture_events(root, args.run_id), completion=args.completion)

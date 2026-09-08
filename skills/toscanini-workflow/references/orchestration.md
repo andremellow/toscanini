@@ -20,3 +20,5 @@ Remediation verification is directed: give a verifier its finding IDs, required 
 Reopen gates by impact. Test-only deltas reopen Test Analyst. UI deltas reopen Test Analyst, Code Review, and QA. Domain deltas reopen Test Analyst, Code Review, and API/UI QA. Security, persistence, transaction, concurrency, or boundary deltas receive directed Architect conformance revalidation when they affect the approved architecture. Retained approvals require a recorded reason.
 
 Use one run ID, numbered remediation rounds, and explicit phases in telemetry. Before completion, require the contract-aware gate. Missing, stale, contaminated, over-budget, or unresolved results never pass.
+
+Before Worker dispatch, complete [execution readiness](execution-readiness.md) for the accepted implementation and validation path, resolving operational conditions and user actions while the user is available. Architecture approval alone is not permission to assume access or installations exist.

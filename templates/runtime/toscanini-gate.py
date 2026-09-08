@@ -7,7 +7,7 @@ import argparse
 import json
 from pathlib import Path
 
-from toscanini_contract import ASSURANCE_BUDGETS, contract_path, ledger_path, project_spec_kit_enabled, read_json, validate_contract, validate_ledger
+from toscanini_contract import ASSURANCE_BUDGETS, contract_path, ledger_path, project_spec_kit_enabled, read_json, validate_contract, validate_ledger, validate_readiness
 from toscanini_report import write_report
 from toscanini_architecture import validate_architecture, directed_findings_resolved
 
@@ -77,6 +77,8 @@ def main() -> int:
         architecture_only = args.require_architecture and not args.require_contract and checkpoint.get("recordedAfterImplementation") is not True and not any(event.get("role") == "worker" for event in history)
         if architecture_only:
             required = {}
+        else:
+            findings.extend(validate_readiness(contract))
         if not architecture_only and (not checkpoint_id or checkpoint.get("recordedAfterImplementation") is not True):
             findings.append("implementation checkpoint must be recorded after implementation")
         required_qa_coverage = {scenario.get("id") for scenario in contract.get("validationScope", {}).get("qaScenarios", []) if scenario.get("id")}

@@ -80,5 +80,47 @@
     "specialistRuns": 14
   },
   "approved": false,
-  "approvedBy": null
+  "approvedBy": null,
+  "readiness": {
+    "scopeId": null,
+    "environment": null,
+    "checks": [
+      {
+        "category": "runtimes",
+        "name": "Identify the applicable prerequisites, or explain why none apply.",
+        "status": "pending",
+        "evidence": null
+      },
+      {
+        "category": "dependencies",
+        "name": "Identify the applicable prerequisites, or explain why none apply.",
+        "status": "pending",
+        "evidence": null
+      },
+      {
+        "category": "access",
+        "name": "Identify the applicable prerequisites, or explain why none apply.",
+        "status": "pending",
+        "evidence": null
+      },
+      {
+        "category": "services",
+        "name": "Identify the applicable prerequisites, or explain why none apply.",
+        "status": "pending",
+        "evidence": null
+      },
+      {
+        "category": "verification",
+        "name": "Identify the applicable prerequisites, or explain why none apply.",
+        "status": "pending",
+        "evidence": null
+      },
+      {
+        "category": "permissions",
+        "name": "Identify the applicable prerequisites, or explain why none apply.",
+        "status": "pending",
+        "evidence": null
+      }
+    ]
+  }
 }

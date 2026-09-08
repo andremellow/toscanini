@@ -44,6 +44,11 @@ def main() -> int:
     args = parser.parse_args()
     if (args.role or args.agent).replace("_", "-") == "architecture-reviewer":
         parser.error("architecture-reviewer is retired; historical events remain readable")
+    if (args.role or args.agent).replace("_", "-") == "worker" and args.event == "started":
+        from toscanini_contract import contract_path, read_json, validate_readiness
+        readiness_errors = validate_readiness(read_json(contract_path(Path.cwd(), args.run_id)))
+        if readiness_errors:
+            parser.error("Worker cannot start: " + "; ".join(readiness_errors))
     root = Path.cwd() / ".toscanini" / "runtime"
     root.mkdir(parents=True, exist_ok=True)
     default_scope, default_checkpoint = contract_defaults(root, args.run_id)

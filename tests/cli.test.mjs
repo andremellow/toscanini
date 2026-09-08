@@ -156,6 +156,16 @@ test("terminal UI is an optional adapter with a truthful snapshot", () => {
   const target = mkdtempSync(resolve(tmpdir(), "toscanini-cli-"));
   run(["init", "--target", target, "--yes"]);
   run(["adapter", "add", "terminal-ui", "--target", target]);
+  const contract = JSON.parse(readFileSync(resolve(target, ".toscanini/templates/execution-contract.json"), "utf8"));
+  contract.runId = "legacy";
+  contract.validationScope.scopeId = "ui-fixture";
+  contract.readiness.scopeId = "ui-fixture";
+  contract.readiness.environment = "Temporary UI telemetry fixture";
+  contract.readiness.checks.forEach((check) => Object.assign(check, {
+    status: "not-required", evidence: "Telemetry-only fixture with no external prerequisites",
+  }));
+  mkdirSync(resolve(target, ".toscanini/runtime/runs/legacy"), { recursive: true });
+  writeFileSync(resolve(target, ".toscanini/runtime/runs/legacy/execution-contract.json"), JSON.stringify(contract));
   execFileSync("python3", [resolve(target, ".toscanini/bin/toscanini-event.py"), "--agent", "worker", "--role", "worker", "--event", "started", "--state", "active", "--summary", "Implementing the task API"], { cwd: target });
   const output = run(["ui", "--target", target]);
   assert.match(output, /COMMAND MATRIX/);
