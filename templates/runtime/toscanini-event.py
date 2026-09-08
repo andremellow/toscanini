@@ -29,16 +29,21 @@ def main() -> int:
     parser.add_argument("--state", required=True, choices=("active", "waiting", "completed", "blocked", "failed"))
     parser.add_argument("--summary", required=True)
     parser.add_argument("--artifact")
-    parser.add_argument("--verdict", choices=("approve", "request-changes", "pass", "pass-with-non-blocking-findings", "fail", "blocked"))
+    parser.add_argument("--verdict", choices=("approved", "approved-with-conditions", "approve", "request-changes", "pass", "pass-with-non-blocking-findings", "fail", "blocked"))
     parser.add_argument("--context-mode", choices=("fresh", "inherited"))
     parser.add_argument("--round", type=int)
-    parser.add_argument("--phase", choices=("contract", "architecture", "implementation", "review", "remediation", "qa", "final-review", "complete"))
+    parser.add_argument("--phase", choices=("contract", "architecture", "architecture-conformance", "implementation", "review", "remediation", "qa", "final-review", "complete"))
     parser.add_argument("--finding-count", type=int)
     parser.add_argument("--review-mode", choices=("independent", "directed"), default="independent")
     parser.add_argument("--scope-id")
     parser.add_argument("--checkpoint-id")
     parser.add_argument("--coverage", action="append", default=[])
+    parser.add_argument("--architecture-sha256")
+    parser.add_argument("--finding-id", action="append", default=[])
+    parser.add_argument("--revalidation-reason")
     args = parser.parse_args()
+    if (args.role or args.agent).replace("_", "-") == "architecture-reviewer":
+        parser.error("architecture-reviewer is retired; historical events remain readable")
     root = Path.cwd() / ".toscanini" / "runtime"
     root.mkdir(parents=True, exist_ok=True)
     default_scope, default_checkpoint = contract_defaults(root, args.run_id)
@@ -48,6 +53,12 @@ def main() -> int:
         "event": args.event, "state": args.state, "summary": args.summary[:240],
         "reviewMode": args.review_mode,
     }
+    if args.architecture_sha256:
+        event["architectureSha256"] = args.architecture_sha256
+    if args.finding_id:
+        event["findingIds"] = sorted(set(args.finding_id))
+    if args.revalidation_reason:
+        event["revalidationReason"] = args.revalidation_reason
     if args.artifact:
         event["artifact"] = args.artifact[:500]
     if args.verdict:

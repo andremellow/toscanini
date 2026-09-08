@@ -9,6 +9,7 @@ from pathlib import Path
 
 from toscanini_contract import ASSURANCE_BUDGETS, contract_path, ledger_path, project_spec_kit_enabled, read_json, validate_contract, validate_ledger
 from toscanini_report import write_report
+from toscanini_architecture import validate_architecture, directed_findings_resolved
 
 DEFAULT_GATES = {
     "code-reviewer": {"approve"},
@@ -16,11 +17,10 @@ DEFAULT_GATES = {
     "qa": {"pass", "pass-with-non-blocking-findings"},
 }
 OPTIONAL_GATES = {
-    "architecture-reviewer": {"approve"},
     "design-reviewer": {"approve"},
     "specification-reviewer": {"approve"},
 }
-FRESH_CONTEXT_GATES = {"test-analyst", "qa", "code-reviewer", "architecture-reviewer", "design-reviewer", "specification-reviewer"}
+FRESH_CONTEXT_GATES = {"test-analyst", "qa", "code-reviewer", "design-reviewer", "specification-reviewer"}
 
 
 def run_events(root: Path, run_id: str) -> list[dict]:
@@ -53,8 +53,6 @@ def main() -> int:
         state = {}
     events = state.get("runs", {}).get(args.run_id, {})
     required = dict(DEFAULT_GATES)
-    if args.require_architecture:
-        required["architecture-reviewer"] = OPTIONAL_GATES["architecture-reviewer"]
     if args.require_design:
         required["design-reviewer"] = OPTIONAL_GATES["design-reviewer"]
     findings = []
@@ -63,23 +61,26 @@ def main() -> int:
     scope_id = None
     checkpoint_id = None
     required_qa_coverage = set()
-    if args.require_contract:
+    contract_required = args.require_contract or args.require_architecture or contract_path(root, args.run_id).exists()
+    if contract_required:
         contract = read_json(contract_path(root, args.run_id))
         findings.extend(validate_contract(contract, args.run_id, project_spec_kit_enabled(root)))
         findings.extend(validate_ledger(read_json(ledger_path(root, args.run_id)), args.run_id, completion=True, contract=contract))
-        if contract.get("architecture", {}).get("required"):
-            required["architecture-reviewer"] = OPTIONAL_GATES["architecture-reviewer"]
         if contract.get("specification", {}).get("required"):
             required["specification-reviewer"] = OPTIONAL_GATES["specification-reviewer"]
+        findings.extend(validate_architecture(root, contract, history, require_artifact=args.require_architecture, completion=True))
         assurance = contract.get("assurance")
         budgets = contract.get("budgets", ASSURANCE_BUDGETS.get(assurance, {}))
         scope_id = contract.get("validationScope", {}).get("scopeId")
         checkpoint = contract.get("implementationCheckpoint", {})
         checkpoint_id = checkpoint.get("id")
-        if not checkpoint_id or checkpoint.get("recordedAfterImplementation") is not True:
+        architecture_only = args.require_architecture and not args.require_contract and checkpoint.get("recordedAfterImplementation") is not True and not any(event.get("role") == "worker" for event in history)
+        if architecture_only:
+            required = {}
+        if not architecture_only and (not checkpoint_id or checkpoint.get("recordedAfterImplementation") is not True):
             findings.append("implementation checkpoint must be recorded after implementation")
         required_qa_coverage = {scenario.get("id") for scenario in contract.get("validationScope", {}).get("qaScenarios", []) if scenario.get("id")}
-        specialist_starts = [event for event in history if event.get("event") == "started" and event.get("role", "").replace("_", "-") != "orchestrator"]
+        specialist_starts = [event for event in history if event.get("event") == "started" and event.get("role", "").replace("_", "-") not in {"orchestrator", "product-owner"}]
         remediation_batches = {
             event.get("round") for event in history
             if event.get("event") == "started"
@@ -93,10 +94,9 @@ def main() -> int:
             findings.append(f"specialist budget exceeded: {len(specialist_starts)}/{specialist_limit}; replan required")
         if round_limit is not None and len(remediation_batches) > round_limit:
             findings.append(f"remediation budget exceeded: {len(remediation_batches)}/{round_limit}; replan required")
-        independent_starts = [event for event in history if event.get("event") == "started" and event.get("reviewMode") == "independent"]
+        independent_starts = [event for event in history if event.get("event") == "started" and event.get("reviewMode") == "independent" and event.get("role", "").replace("_", "-") not in {"architect", "architecture-reviewer", "product-owner"}]
         allowed_independent_starts = {
-            "code-reviewer": 2,
-            "architecture-reviewer": 2,
+            "code-reviewer": 1,
             "design-reviewer": 2,
         }
         for role in {event.get("role", "").replace("_", "-") for event in independent_starts}:
@@ -112,15 +112,24 @@ def main() -> int:
         role_history = [value for value in history if value.get("role", "").replace("_", "-") == role]
         terminal_history = [value for value in role_history if value.get("event") in {"completed", "blocked", "failed"} and value.get("reviewMode") == "independent"]
         event = terminal_history[-1] if terminal_history else None
+        # A directed closure retains the independent approval and checks only the delta.
+        directed = [value for value in role_history if value.get("event") in {"completed", "blocked", "failed"} and value.get("reviewMode") == "directed"]
+        if event and directed and role_history.index(directed[-1]) > role_history.index(event):
+            candidate = directed[-1]
+            directed_starts = [value for value in role_history[:role_history.index(candidate)] if value.get("event") == "started" and value.get("reviewMode") == "directed" and value.get("checkpointId") == candidate.get("checkpointId")]
+            if event.get("state") == "completed" and (event.get("verdict") in accepted or (event.get("verdict") in {"request-changes", "fail"} and isinstance(event.get("findingCount"), int) and event["findingCount"] > 0)) and event.get("contextMode") == "fresh" and event.get("scopeId") == scope_id and directed_starts and directed_findings_resolved(root, args.run_id, candidate):
+                event = candidate
+            else:
+                findings.append(f"invalid directed revalidation evidence: {role}")
         if not event:
             findings.append(f"missing gate: {role}")
         elif event.get("state") != "completed":
             findings.append(f"incomplete gate: {role} ({event.get('state', 'unknown')})")
         elif event.get("verdict") not in accepted:
             findings.append(f"unapproved gate: {role} ({event.get('verdict', 'missing verdict')})")
-        elif role in FRESH_CONTEXT_GATES and event.get("contextMode") != "fresh":
+        elif role in FRESH_CONTEXT_GATES and event.get("reviewMode") == "independent" and event.get("contextMode") != "fresh":
             findings.append(f"non-independent gate: {role} ({event.get('contextMode', 'missing context mode')})")
-        if args.require_contract:
+        if contract_required:
             starts = [value for value in role_history if value.get("event") == "started" and value.get("reviewMode") == "independent"]
             if not starts:
                 findings.append(f"missing started event: {role}")
@@ -135,7 +144,7 @@ def main() -> int:
             if role == "qa" and event and not required_qa_coverage.issubset(set(event.get("coverage", []))):
                 missing = sorted(required_qa_coverage - set(event.get("coverage", [])))
                 findings.append(f"incomplete QA coverage: {', '.join(missing)}")
-    if args.require_contract:
+    if contract_required:
         first_qa = next((index for index, event in enumerate(history) if event.get("role", "").replace("_", "-") == "qa" and event.get("event") == "started" and event.get("reviewMode") == "independent"), None)
         if first_qa is not None:
             for prerequisite in ("code-reviewer", "test-analyst"):
@@ -144,24 +153,11 @@ def main() -> int:
                     and event.get("event") == "completed"
                     and event.get("verdict") == "approve"
                     and event.get("reviewMode") == "independent"
-                    and event.get("checkpointId") == checkpoint_id
+                    and event.get("checkpointId") == history[first_qa].get("checkpointId")
                     for event in history[:first_qa]
                 )
                 if not cleared:
                     findings.append(f"QA started before approved {prerequisite}")
-        last_qa = max((index for index, event in enumerate(history) if event.get("role", "").replace("_", "-") == "qa" and event.get("event") in {"completed", "blocked", "failed"} and event.get("reviewMode") == "independent"), default=None)
-        final_review = any(
-            index > last_qa
-            and event.get("role", "").replace("_", "-") == "code-reviewer"
-            and event.get("event") == "completed"
-            and event.get("verdict") == "approve"
-            and event.get("phase") == "final-review"
-            and event.get("reviewMode") == "independent"
-            and event.get("checkpointId") == checkpoint_id
-            for index, event in enumerate(history)
-        ) if last_qa is not None else False
-        if not final_review:
-            findings.append("missing final independent code review after QA")
     report = write_report(root, args.run_id, findings)
     print(json.dumps({"runId": args.run_id, "approved": not findings, "findings": findings, "report": str(report)}, indent=2))
     return 1 if findings else 0

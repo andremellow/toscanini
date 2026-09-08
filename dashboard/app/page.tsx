@@ -5,7 +5,7 @@ import { Activity, AlertTriangle, ArrowRight, Check, Clock3, Code2, Eye, FileSea
 
 const roles = [
   { id: "architect", label: "Architect", starts: 1, findings: 0, icon: Layers3 },
-  { id: "architecture", label: "Architecture Review", starts: 7, findings: 4, icon: GitBranch },
+  { id: "architecture", label: "Architecture Review (legacy)", starts: 7, findings: 4, icon: GitBranch },
   { id: "specification", label: "Specification Review", starts: 1, findings: 0, icon: FileSearch },
   { id: "worker", label: "Worker", starts: 9, findings: 0, icon: Code2 },
   { id: "code", label: "Code Review", starts: 8, findings: 2, icon: Eye },
@@ -71,7 +71,7 @@ export default function Home() {
       <article className="panel fault-panel"><div className="section-title"><div><small>CONTROL FAILURES</small><h2>Why it kept looping</h2></div><span>5 systemic issues</span></div><div className="problem-list">{problems.map(([title, detail], index) => <div key={title}><span>{String(index+1).padStart(2,"0")}</span><p><strong>{title}</strong>{detail}</p></div>)}</div></article>
     </section>
     <section className="panel timeline-panel"><div className="section-title timeline-title"><div><small>COMMUNICATION TIMELINE</small><h2>What moved between agents</h2></div><div className="filters">{["all","finding","qa","late","risk"].map((value)=><button key={value} className={filter===value?"active":""} onClick={()=>setFilter(value)}>{value}</button>)}</div></div><div className="timeline-list">{visibleMoments.map((moment,index)=><article className={`moment ${moment.kind}`} key={`${moment.at}-${moment.title}`}><div className="moment-time"><strong>{moment.at}</strong><span>{moment.round}</span></div><div className="moment-route"><span>{moment.from}</span><ArrowRight size={15}/><span>{moment.to}</span></div><div className="moment-copy"><strong>{moment.title}</strong><p>{moment.detail}</p></div><span className="moment-index">{String(index+1).padStart(2,"0")}</span></article>)}</div></section>
-    <section className="decision-grid"><article className="panel conclusion"><small>EARLIEST AVOIDABLE DIVERGENCE</small><h2>The first checkpoint approved tests without executable client coverage, real contention proof or representative media fixtures.</h2></article><article className="panel correction"><small>NEW CONTROL MODEL</small><div><span>Freeze scope</span><ArrowRight/><span>One complete review batch</span><ArrowRight/><span>Directed fixes</span><ArrowRight/><span>One final review</span></div><p>Partial or directed evidence can close findings, but can no longer replace an independent gate.</p></article></section>
+    <section className="decision-grid"><article className="panel conclusion"><small>EARLIEST AVOIDABLE DIVERGENCE</small><h2>The first checkpoint approved tests without executable client coverage, real contention proof or representative media fixtures.</h2></article><article className="panel correction"><small>NEW CONTROL MODEL</small><div><span>Freeze scope</span><ArrowRight/><span>One complete review batch</span><ArrowRight/><span>Directed fixes</span><ArrowRight/><span>Architecture conformance, when applicable</span></div><p>Directed corrections retain the original independent evidence and verify only the affected findings.</p></article></section>
     <footer><span>Source: Toscanini execution diagnostic · 88 telemetry events</span><span>CLI 0.5.0 · Project 0.4.0</span></footer>
   </main>;
 }

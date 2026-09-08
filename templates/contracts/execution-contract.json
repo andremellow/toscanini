@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "runId": "replace-with-run-id",
   "assurance": "standard",
   "goal": "Describe the single outcome this execution must deliver.",
@@ -10,25 +10,41 @@
     "specKitEnabled": false
   },
   "scope": {
-    "in": ["List behavior and components allowed to change."],
-    "out": ["List adjacent improvements that must remain separate."],
-    "changeBoundary": ["List expected files, modules, or subsystems when known."]
+    "in": [
+      "List behavior and components allowed to change."
+    ],
+    "out": [
+      "List adjacent improvements that must remain separate."
+    ],
+    "changeBoundary": [
+      "List expected files, modules, or subsystems when known."
+    ]
   },
   "invariants": [
-    {"id": "INV-01", "statement": "State a behavior or architectural property that must remain true."}
+    {
+      "id": "INV-01",
+      "statement": "State a behavior or architectural property that must remain true."
+    }
   ],
   "acceptanceCriteria": [
-    {"id": "AC-01", "statement": "State an observable, testable outcome."}
+    {
+      "id": "AC-01",
+      "statement": "State an observable, testable outcome."
+    }
   ],
   "validationScope": {
     "scopeId": "replace-with-stable-scope-id",
     "frozen": false,
-    "regressionSurfaces": ["List only behavior directly connected to the change."],
+    "regressionSurfaces": [
+      "List only behavior directly connected to the change."
+    ],
     "qaScenarios": [
       {
         "id": "QA-01",
         "description": "Describe one executable scenario agreed before implementation.",
-        "acceptanceCriteria": ["AC-01"],
+        "acceptanceCriteria": [
+          "AC-01"
+        ],
         "invariants": []
       }
     ]
@@ -49,11 +65,20 @@
   "architecture": {
     "required": false,
     "status": "not-required",
-    "artifact": null
+    "artifact": null,
+    "sha256": null,
+    "ownerApproval": {
+      "approvedBy": null,
+      "decision": null,
+      "artifactSha256": null,
+      "scopeId": null
+    },
+    "frameworkAlignment": []
   },
   "budgets": {
     "remediationRounds": 2,
-    "specialistRuns": 15
+    "specialistRuns": 14
   },
-  "approved": false
+  "approved": false,
+  "approvedBy": null
 }

@@ -16,13 +16,14 @@ def run(script: Path, target: Path, *args: str) -> subprocess.CompletedProcess[s
 
 
 def execution_contract(run_id: str, assurance: str = "standard") -> dict:
-    budgets = {"remediationRounds": 2, "specialistRuns": 15}
+    budgets = {"remediationRounds": 2, "specialistRuns": 14}
     if assurance == "fast":
-        budgets = {"remediationRounds": 1, "specialistRuns": 8}
+        budgets = {"remediationRounds": 1, "specialistRuns": 7}
     if assurance == "critical":
-        budgets = {"remediationRounds": 2, "specialistRuns": 18}
+        budgets = {"remediationRounds": 2, "specialistRuns": 17}
     return {
-        "schemaVersion": 2,
+        "schemaVersion": 3,
+        "approvedBy": "product-owner",
         "runId": run_id,
         "assurance": assurance,
         "goal": "Deliver the accepted behavior",
@@ -543,7 +544,8 @@ class WorkflowTests(unittest.TestCase):
             gate = target / ".toscanini" / "bin" / "toscanini-gate.py"
             rejected = subprocess.run(["python3", str(gate), "--run-id", run_id, "--require-contract"], cwd=target, capture_output=True, text=True)
             self.assertEqual(rejected.returncode, 1)
-            self.assertIn("missing gate: architecture-reviewer", rejected.stdout)
+            self.assertIn("missing Architect authoring verdict", rejected.stdout)
+            self.assertNotIn("missing gate: architecture-reviewer", rejected.stdout)
             self.assertTrue((run_root / "execution-report.md").exists())
 
     def test_completion_infers_required_specification_reviewer_from_contract(self):
@@ -603,21 +605,10 @@ class WorkflowTests(unittest.TestCase):
                 "--context-mode", "fresh", "--round", "1", "--phase", "qa", "--finding-count", "0",
                 "--coverage", "QA-01", "--summary", "QA passed",
             ], cwd=target, check=True)
-            subprocess.run([
-                "python3", str(reporter), "--run-id", run_id, "--agent", "code-reviewer-final",
-                "--role", "code-reviewer", "--event", "started", "--state", "active", "--round", "1",
-                "--phase", "final-review", "--summary", "Final review started",
-            ], cwd=target, check=True)
-            subprocess.run([
-                "python3", str(reporter), "--run-id", run_id, "--agent", "code-reviewer-final",
-                "--role", "code-reviewer", "--event", "completed", "--state", "completed",
-                "--verdict", "approve", "--context-mode", "fresh", "--round", "1",
-                "--phase", "final-review", "--finding-count", "0", "--summary", "Final review approved",
-            ], cwd=target, check=True)
             result = subprocess.run(["python3", str(gate), "--run-id", run_id, "--require-contract"], cwd=target, capture_output=True, text=True)
             self.assertEqual(result.returncode, 1)
             gate_findings = json.loads(result.stdout)["findings"]
-            self.assertEqual(gate_findings, ["specialist budget exceeded: 9/8; replan required"])
+            self.assertEqual(gate_findings, ["specialist budget exceeded: 8/7; replan required"])
 
     def test_directed_qa_cannot_replace_blocked_independent_qa(self):
         with tempfile.TemporaryDirectory() as folder:

@@ -12,7 +12,7 @@ function run(args, cwd) {
 }
 
 test("version reports the CLI and project installation state", () => {
-  assert.equal(run(["--version"]).trim(), "0.7.0");
+  assert.equal(run(["--version"]).trim(), "0.9.0");
 
   const target = mkdtempSync(resolve(tmpdir(), "toscanini-cli-"));
   assert.match(run(["version", "--target", target]), /Project: not installed[\s\S]*Status: Toscanini is not installed/);
@@ -23,9 +23,9 @@ test("version reports the CLI and project installation state", () => {
   manifest.version = "0.5.0";
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
 
-  assert.match(run(["version", "--target", target]), /Toscanini CLI: 0\.7\.0[\s\S]*Project: 0\.5\.0[\s\S]*Status: project update required/);
+  assert.match(run(["version", "--target", target]), /Toscanini CLI: 0\.9\.0[\s\S]*Project: 0\.5\.0[\s\S]*Status: project update required/);
   run(["update", "--target", target]);
-  assert.match(run(["version", "--target", target]), /Toscanini CLI: 0\.7\.0[\s\S]*Project: 0\.7\.0[\s\S]*Status: current/);
+  assert.match(run(["version", "--target", target]), /Toscanini CLI: 0\.9\.0[\s\S]*Project: 0\.9\.0[\s\S]*Status: current/);
 });
 
 test("analyze runs only enabled adapter analyzers", () => {
@@ -123,7 +123,7 @@ test("agent list shows every available agent and its current state", () => {
   assert.match(output, /enabled\s+architect/);
   assert.match(output, /disabled\s+qa/);
   assert.match(output, /enabled\s+test-analyst/);
-  for (const agent of ["architect", "architecture-reviewer", "code-reviewer", "design-agent", "design-reviewer", "qa", "test-analyst"]) {
+  for (const agent of ["architect", "code-reviewer", "design-agent", "design-reviewer", "qa", "test-analyst"]) {
     assert.match(output, new RegExp(agent));
   }
 });

@@ -1,6 +1,6 @@
 {
   "name": "maestro-toscanini",
-  "version": "0.7.0",
+  "version": "0.9.0",
   "description": "A disciplined multi-agent workflow for shipping verified software",
   "license": "MIT",
   "repository": {
