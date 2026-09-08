@@ -8,6 +8,11 @@ import json
 from pathlib import Path
 
 ASSURANCE_BUDGETS = {
+    "fast": {"remediationRounds": 1, "specialistRuns": 7},
+    "standard": {"remediationRounds": 2, "specialistRuns": 14},
+    "critical": {"remediationRounds": 2, "specialistRuns": 17},
+}
+LEGACY_ASSURANCE_BUDGETS = {
     "fast": {"remediationRounds": 1, "specialistRuns": 8},
     "standard": {"remediationRounds": 2, "specialistRuns": 15},
     "critical": {"remediationRounds": 2, "specialistRuns": 18},
@@ -41,10 +46,50 @@ def project_spec_kit_enabled(root: Path) -> bool:
     return "spec-kit" in manifest.get("configuration", {}).get("adapters", [])
 
 
+READINESS_CATEGORIES = {'runtimes', 'dependencies', 'access', 'services', 'verification', 'permissions'}
+
+
+def validate_readiness(contract: dict) -> list[str]:
+    # Historical contracts remain auditable; new runs must record concrete preparation.
+    if contract.get('schemaVersion') == 2:
+        return []
+    readiness = contract.get('readiness')
+    if not isinstance(readiness, dict):
+        return ['missing execution readiness assessment']
+    findings = []
+    if not readiness.get('scopeId') or readiness.get('scopeId') != contract.get('validationScope', {}).get('scopeId'):
+        findings.append('execution readiness does not match the frozen scope')
+    if not isinstance(readiness.get('environment'), str) or not readiness['environment'].strip():
+        findings.append('execution readiness must identify the Worker environment')
+    checks = readiness.get('checks')
+    if not isinstance(checks, list):
+        return findings + ['missing execution readiness checks']
+    covered = set()
+    for check in checks:
+        if not isinstance(check, dict):
+            findings.append('invalid execution readiness check')
+            continue
+        category = check.get('category')
+        if not isinstance(category, str) or category not in READINESS_CATEGORIES:
+            findings.append('unknown execution readiness category')
+            continue
+        covered.add(category)
+        # Never echo evidence or dependency names: they could accidentally contain secrets.
+        if check.get('status') not in {'verified', 'not-required'}:
+            findings.append(f'execution prerequisite is unresolved: {category}')
+        if any(not isinstance(check.get(key), str) or not check[key].strip() for key in ('name', 'evidence')):
+            findings.append(f'execution prerequisite needs a name and nonsecret evidence: {category}')
+    for category in sorted(READINESS_CATEGORIES - covered):
+        findings.append(f'missing execution readiness category: {category}')
+    return findings
+
+
 def validate_contract(contract: dict, run_id: str, spec_kit_enabled: bool | None = None) -> list[str]:
     findings: list[str] = []
     if not contract:
         return ["missing or invalid execution contract"]
+    if contract.get("schemaVersion") not in {2, 3}:
+        findings.append("execution contract schemaVersion must be 2 or 3")
     if contract.get("runId") != run_id:
         findings.append("contract runId does not match the active run")
     if contract.get("assurance") not in ASSURANCE_BUDGETS:
@@ -132,8 +177,40 @@ def validate_contract(contract: dict, run_id: str, spec_kit_enabled: bool | None
         findings.append("architecture must be required for this task classification")
     if architecture.get("required") and (architecture.get("status") != "approved" or not architecture.get("artifact")):
         findings.append("required architecture is not approved with an artifact")
+    if architecture.get("required") or architecture.get("artifact"):
+        approval = architecture.get("ownerApproval") or {}
+        if not isinstance(approval, dict):
+            approval = {}
+        if approval.get("approvedBy") != "product-owner" or (not isinstance(approval.get("decision"), str) or not approval["decision"].strip()):
+            findings.append("architecture requires explicit product-owner approval with a decision reference")
+        if not architecture.get("sha256") or approval.get("artifactSha256") != architecture.get("sha256"):
+            findings.append("architecture approval must match the artifact sha256")
+        if approval.get("scopeId") != validation_scope.get("scopeId"):
+            findings.append("architecture approval must match the frozen scope")
+        if contract.get("schemaVersion") == 3:
+            alignment = architecture.get("frameworkAlignment")
+            if not isinstance(alignment, list) or not alignment:
+                findings.append("architecture requires per-repository framework alignment evidence")
+            else:
+                for item in alignment:
+                    if not isinstance(item, dict):
+                        findings.append("invalid framework alignment entry")
+                        continue
+                    label = item.get("repository", "<missing repository>")
+                    if any(not isinstance(item.get(key), str) or not item[key].strip() for key in ("repository", "framework", "version", "referenceAssessment")):
+                        findings.append(f"incomplete framework/reference assessment: {label}")
+                    guidance = item.get("guidance")
+                    if not isinstance(guidance, list) or not guidance or any(not isinstance(source, str) or not source.strip() for source in guidance):
+                        findings.append(f"missing consulted framework guidance: {label}")
+                    if item.get("status") not in {"aligned", "approved-deviation"}:
+                        findings.append(f"unresolved framework alignment decision: {label}")
+                    if item.get("status") == "approved-deviation" and (not isinstance(item.get("ownerDecision"), str) or not item["ownerDecision"].strip()):
+                        findings.append(f"framework deviation requires a specific product-owner decision: {label}")
+    if contract.get("schemaVersion") == 3 and contract.get("approvedBy") != "product-owner":
+        findings.append("execution contract requires product-owner approval")
     assurance = contract.get("assurance")
-    expected = ASSURANCE_BUDGETS.get(assurance, {})
+    limits = LEGACY_ASSURANCE_BUDGETS if contract.get("schemaVersion") == 2 else ASSURANCE_BUDGETS
+    expected = limits.get(assurance, {})
     budgets = contract.get("budgets", {})
     for key, maximum in expected.items():
         value = budgets.get(key)
@@ -220,7 +297,10 @@ def main() -> int:
     ledger_file = Path(args.ledger) if args.ledger else ledger_path(root, args.run_id)
     contract = read_json(contract_file)
     findings = validate_contract(contract, args.run_id, project_spec_kit_enabled(root))
+    findings += validate_readiness(contract)
     findings += validate_ledger(read_json(ledger_file), args.run_id, args.completion, contract=contract)
+    from toscanini_architecture import validate_architecture, architecture_events
+    findings += validate_architecture(root, contract, architecture_events(root, args.run_id), completion=args.completion)
     print(json.dumps({"runId": args.run_id, "approved": not findings, "findings": findings}, indent=2))
     return 1 if findings else 0
 

@@ -1,6 +1,15 @@
 # Changelog
 
-## Unreleased
+## 0.9.0
+
+- Check execution prerequisites during planning and gate Worker start on resolved, evidenced dependencies, access, services, verification and permissions. Preserve architecture-only approval independently of operational readiness.
+
+- Require per-repository framework/reference suitability evidence and explicit decisions for material deviations before architecture approval; consult available Laravel Boost guidance and keep TDD strategy separate.
+
+- Move architecture approval directly to the product owner; retire the document reviewer, add Architect conformance after QA and migrate existing installations.
+- Expand the Architect output contract and ship schema v3 with 7/14/17 specialist ceilings in version 0.9.0.
+
+## Earlier changes
 
 - Fix Markdown fragment navigation using stable heading anchors with duplicate and Unicode support.
 

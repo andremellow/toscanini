@@ -14,7 +14,6 @@ const builtInAdapters = ["laravel", "spec-kit", "terminal-ui"];
 const assuranceLevels = ["fast", "standard", "critical"];
 const builtInAgents = [
   "architect",
-  "architecture-reviewer",
   "code-reviewer",
   "design-agent",
   "design-reviewer",
@@ -109,7 +108,7 @@ function configuration(target) {
   const installed = manifest(target);
   if (!installed) throw new Error(`Toscanini is not installed in ${target}. Run 'toscanini init' first.`);
   const current = installed.configuration ?? {};
-  const configuredAgents = (current.agents ?? builtInAgents).map((agent) => agent === "test-expert" ? "test-analyst" : agent);
+  const configuredAgents = (current.agents ?? builtInAgents).map((agent) => agent === "test-expert" ? "test-analyst" : agent === "architecture-reviewer" ? "architect" : agent);
   return {
     adapters: [...(current.adapters ?? [])],
     agents: [...new Set(configuredAgents)],
@@ -334,7 +333,7 @@ async function init(target, options) {
   const detected = inspect(target);
   const installed = manifest(target)?.configuration;
   const adapters = [...(installed?.adapters ?? [])];
-  const agents = [...new Set((installed?.agents ?? builtInAgents).map((agent) => agent === "test-expert" ? "test-analyst" : agent))];
+  const agents = [...new Set((installed?.agents ?? builtInAgents).map((agent) => agent === "test-expert" ? "test-analyst" : agent === "architecture-reviewer" ? "architect" : agent))];
   const extensions = [...(installed?.extensions ?? [])];
   const assurance = installed?.assurance ?? "standard";
   let laravelBoost = installed?.laravelBoost ?? "optional";

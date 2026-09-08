@@ -224,6 +224,7 @@ def desired_files(target: Path, inspection: dict, adapters: list[str], agents: l
         desired[target / ".toscanini" / "bin" / runtime_tool.name] = runtime_tool.read_bytes()
     for contract_template in (ROOT / "templates" / "contracts").glob("*.json"):
         desired[target / ".toscanini" / "templates" / contract_template.name] = contract_template.read_bytes()
+    desired[target / ".toscanini" / "templates" / "architecture.md"] = (ROOT / "templates" / "specs" / "architecture.md").read_bytes()
     desired[target / ".toscanini" / ".gitignore"] = b"runtime/\nreports/\n"
     if "spec-kit" in adapters:
         for source in (ROOT / "templates" / "specs").glob("*.md"):
@@ -257,6 +258,9 @@ def plan(target: Path, adapters: list[str], agents: list[str], extensions: list[
         else:
             conflicts.append(relative)
     desired_relatives = {str(path.relative_to(target)) for path in desired}
+    retired = ".codex/agents/architecture-reviewer.toml"
+    if (target / retired).exists() and retired not in prior:
+        actions.append(("archive", target / retired, b""))
     for relative, metadata in prior.items():
         if relative == ".toscanini/gaps.md" or relative in desired_relatives:
             continue
@@ -265,6 +269,8 @@ def plan(target: Path, adapters: list[str], agents: list[str], extensions: list[
             continue
         if digest(path.read_bytes()) == metadata.get("sha256"):
             actions.append(("remove", path, b""))
+        elif relative == retired:
+            actions.append(("archive", path, b""))
         else:
             conflicts.append(relative)
     return actions, conflicts, inspection
@@ -287,7 +293,7 @@ def install(target: Path, dry_run: bool, adapters: list[str], disabled_agents: l
         installed_manifest = load_manifest(target)
         previous = installed_manifest.get("configuration", {})
         adapters = previous.get("adapters", [])
-        enabled_agents = {"test-analyst" if agent == "test-expert" else agent for agent in previous.get("agents", BUILT_IN_AGENTS)}
+        enabled_agents = {"test-analyst" if agent == "test-expert" else "architect" if agent == "architecture-reviewer" else agent for agent in previous.get("agents", BUILT_IN_AGENTS)}
         if installed_manifest.get("version") != VERSION:
             enabled_agents.add("specification-reviewer")
         disabled_agents = [agent for agent in BUILT_IN_AGENTS if agent not in enabled_agents]
@@ -316,6 +322,12 @@ def install(target: Path, dry_run: bool, adapters: list[str], disabled_agents: l
         return 0
     files = {}
     for action, path, content in actions:
+        if action == "archive":
+            archive = target / ".toscanini" / "legacy" / f"{digest(path.read_bytes())}-{path.name}"
+            archive.parent.mkdir(parents=True, exist_ok=True)
+            archive.write_bytes(path.read_bytes())
+            path.unlink()
+            continue
         if action == "remove":
             path.unlink()
             continue

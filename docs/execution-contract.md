@@ -26,18 +26,24 @@ A finding may block only when it cites an approved acceptance criterion, an appr
 
 Independent approvals are bound to the frozen scope ID and the implementation checkpoint ID. Telemetry distinguishes `independent` review from `directed` remediation. A directed result may close its assigned finding, but it cannot replace an independent gate. Independent QA must report coverage for every frozen `QA-*` scenario, preventing a bounded API check from replacing incomplete browser QA.
 
-## Remediation and final review
+## Remediation and final conformance
 
-Remediation verification is directed: it knows which finding IDs must be closed and performs only the smallest causal checks for regressions introduced by the correction. It cannot become a new full audit. Final independent review happens once after stabilization and receives the contract and complete raw diff without the implementation narrative.
+Remediation verification is directed: it knows which finding IDs must be closed and performs only the smallest causal checks for regressions introduced by the correction. It cannot become a new full audit. The Architect checks architecture conformance once after QA when an architecture artifact exists, reading approved artifacts and final implementation/tests.
 
-Only affected gates reopen after a correction. Unaffected approvals may be retained with an explicit impact reason. A new blocking problem family discovered by final review stops the run for replanning instead of starting another open-ended loop. The completion gate rejects unresolved blockers and exceeded finite budgets:
+Only affected gates reopen after a correction. Unaffected approvals may be retained with an explicit impact reason. Conformance deviations are implementation findings; directed revalidation is limited to architecture-affecting corrections. The completion gate rejects unresolved blockers and exceeded finite budgets:
 
 ```sh
 python3 .toscanini/bin/toscanini-gate.py --run-id <run-id> --require-contract
 ```
 
-Fast assurance permits one remediation round and eight specialist starts. Standard permits two rounds and fifteen specialist starts. Critical permits two rounds and eighteen specialist starts; it increases evidence depth, not repetition. Exceeding a budget stops the run for replanning; it never approves incomplete work.
+Fast assurance permits one remediation round and seven specialist starts. Standard permits two rounds and fourteen specialist starts. Critical permits two rounds and seventeen specialist starts; it increases evidence depth, not repetition. Exceeding a budget stops the run for replanning; it never approves incomplete work.
 
 Every completion-gate attempt writes `.toscanini/runtime/runs/<run-id>/execution-report.md`, including an explainable efficiency score, agent starts, rounds, findings, follow-ups, elapsed/baseline ratio, detected-by versus failure-stage attribution, and the final gate result. A blocked or over-budget run still produces the report.
 
 Material findings may include a reusable learning proposal and its intended policy, adapter, agent, or workflow target. Proposals start as `pending`. Toscanini reports them but never applies them automatically; acceptance and application require an explicit user decision and a separate change.
+
+See [architecture workflow](architecture-workflow.md) for schema v3 product-owner approval, author telemetry and final conformance evidence. Historical v2 runs remain readable with their recorded budgets.
+
+## Execution readiness
+
+Before Worker dispatch, complete the [execution readiness assessment](../skills/toscanini-workflow/references/execution-readiness.md) in the contract. Required installations, registry/licence access, services, verification prerequisites and user actions must be resolved in the Worker environment. Architecture approval alone does not mean execution is ready. This applies to new schema v3 contracts; historical v2 contracts remain readable.
