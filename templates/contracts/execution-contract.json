@@ -47,7 +47,8 @@
         ],
         "invariants": []
       }
-    ]
+    ],
+    "codeReviewPaths": []
   },
   "implementationCheckpoint": {
     "id": null,

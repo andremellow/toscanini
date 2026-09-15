@@ -134,6 +134,10 @@ def validate_contract(contract: dict, run_id: str, spec_kit_enabled: bool | None
     regression_surfaces = validation_scope.get("regressionSurfaces", [])
     if not isinstance(regression_surfaces, list) or not regression_surfaces:
         findings.append("validation scope requires at least one direct regression surface")
+    if contract.get("schemaVersion") == 3:
+        paths = validation_scope.get("codeReviewPaths")
+        if not isinstance(paths, list) or not paths or any(not isinstance(path, str) or not path.strip() or path.startswith("/") or ".." in path.split("/") or path in {".", "./"} or path.endswith("/") or any(c in path for c in "*?[") for path in paths):
+            findings.append("validation scope requires exact project-relative codeReviewPaths, not repository-wide patterns")
     qa_scenarios = validation_scope.get("qaScenarios", [])
     if not isinstance(qa_scenarios, list) or not qa_scenarios:
         findings.append("validation scope requires at least one pre-approved QA scenario")
@@ -259,6 +263,18 @@ def validate_ledger(ledger: dict, run_id: str, completion: bool = False, contrac
                 references = item.get(field, [])
                 if not isinstance(references, list) or any(not isinstance(ref, str) or ref not in allowed for ref in references):
                     findings.append(f"finding {identifier} cites {field} outside the frozen contract")
+            role = str(item.get("sourceRole", "")).replace("_", "-")
+            if approved.get("schemaVersion") == 3 and role in {"qa", "code-reviewer", "test-analyst"}:
+                if not isinstance(item.get("changeEvidence"), str) or not item["changeEvidence"].strip():
+                    findings.append(f"finding {identifier} lacks causal evidence linking it to the current change")
+                field = "qaScenarios" if role == "qa" else "changedPaths"
+                validation = approved.get("validationScope", {})
+                raw_targets = validation.get("qaScenarios" if role == "qa" else "codeReviewPaths", [])
+                raw_targets = raw_targets if isinstance(raw_targets, list) else []
+                targets = {entry["id"] for entry in raw_targets if isinstance(entry, dict) and isinstance(entry.get("id"), str)} if role == "qa" else {path for path in raw_targets if isinstance(path, str)}
+                references = item.get(field)
+                if not isinstance(references, list) or not references or any(not isinstance(ref, str) or ref not in targets for ref in references):
+                    findings.append(f"finding {identifier} cites {field} outside its assigned feature scope")
             basis_field = {"acceptance-criterion": "acceptanceCriteria", "invariant": "invariants"}.get(item.get("basis"))
             if item.get("severity") == "blocking" and basis_field and not item.get(basis_field):
                 findings.append(f"blocking finding {identifier} must cite its {basis_field} basis")

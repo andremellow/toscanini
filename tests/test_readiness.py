@@ -66,3 +66,37 @@ class ReadinessTests(unittest.TestCase):
         result = subprocess.run(['python3', str(self.root / '.toscanini/bin/toscanini_contract.py'),
                                  '--run-id', 'ready'], cwd=self.root, text=True, capture_output=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_feature_scope_rejects_unrelated_findings_even_with_a_valid_criterion(self):
+        self.save()
+        ledger_path = self.path.with_name('finding-ledger.json')
+        for role in ['qa', 'code-reviewer', 'test-analyst']:
+            item = {'id': 'F-01', 'sourceRole': role, 'failureStage': 'implementation',
+                    'classification': 'IMPLEMENTATION_DEVIATION', 'scope': 'in-contract', 'severity': 'blocking',
+                    'basis': 'acceptance-criterion', 'acceptanceCriteria': ['AC-01'], 'invariants': [],
+                    'discoveredRound': 1, 'discoveredPhase': 'review', 'summary': 'Feature behavior fails',
+                    'evidence': 'Observed failure', 'requiredOutcome': 'Accepted behavior', 'status': 'resolved',
+                    'qaScenarios': ['QA-01'], 'changedPaths': ['src/feature.py'],
+                    'changeEvidence': 'Changed feature handler drops the value required by AC-01'}
+            for kind in ['valid', 'unrelated', 'no-cause', 'incidental']:
+                with self.subTest(role=role, kind=kind):
+                    finding = dict(item)
+                    if kind == 'unrelated':
+                        finding['qaScenarios' if role == 'qa' else 'changedPaths'] = ['unrelated-screen-or-file']
+                    if kind == 'no-cause': finding['changeEvidence'] = ''
+                    if kind == 'incidental':
+                        finding.update(scope='follow-up', severity='non-blocking', status='deferred',
+                                       changedPaths=['unrelated.py'], qaScenarios=['QA-UNRELATED'], changeEvidence='')
+                    ledger_path.write_text(json.dumps({'runId': 'ready', 'findings': [finding]}))
+                    result = subprocess.run(['python3', str(self.root / '.toscanini/bin/toscanini_contract.py'),
+                                             '--run-id', 'ready'], cwd=self.root, capture_output=True, text=True)
+                    self.assertEqual(result.returncode, 0 if kind in ['valid', 'incidental'] else 1, result.stdout + result.stderr)
+
+    def test_review_scope_cannot_be_a_repository_wide_pattern(self):
+        for paths in [[], ['**/*'], ['.'], ['/tmp/other.py'], ['../other.py']]:
+            with self.subTest(paths=paths):
+                self.contract['validationScope']['codeReviewPaths'] = paths
+                self.save()
+                result = subprocess.run(['python3', str(self.root / '.toscanini/bin/toscanini_contract.py'),
+                                         '--run-id', 'ready'], cwd=self.root, capture_output=True, text=True)
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)

@@ -22,3 +22,5 @@ Reopen gates by impact. Test-only deltas reopen Test Analyst. UI deltas reopen T
 Use one run ID, numbered remediation rounds, and explicit phases in telemetry. Before completion, require the contract-aware gate. Missing, stale, contaminated, over-budget, or unresolved results never pass.
 
 Before Worker dispatch, complete [execution readiness](execution-readiness.md) for the accepted implementation and validation path, resolving operational conditions and user actions while the user is available. Architecture approval alone is not permission to assume access or installations exist.
+
+Dispatch QA only the frozen scenario IDs and affected feature/screens; dispatch Code Review/Test Analyst the exact `validationScope.codeReviewPaths` and changed hunks. Include exclusions explicitly. Context reads and setup navigation never expand the audit. Reject a finding without scenario/path linkage and concrete `changeEvidence` before routing remediation; do not turn missing linkage into a request for the Worker to fix unrelated behavior.

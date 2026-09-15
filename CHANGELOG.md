@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1
+
+- Lock validation to the changed feature: exact review paths, approved QA scenarios and causal finding evidence; reject unauthorized QA coverage and unrelated in-contract findings.
+
 ## 0.9.0
 
 - Check execution prerequisites during planning and gate Worker start on resolved, evidenced dependencies, access, services, verification and permissions. Preserve architecture-only approval independently of operational readiness.

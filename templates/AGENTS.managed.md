@@ -25,6 +25,12 @@ Only one Worker may edit production code or tests. Reviewers and QA start with n
 
 Remediation verification is deliberately directed and is not an independent review. It receives the finding IDs and required outcomes it must recheck. The post-implementation Architect receives approved specification, architecture, contract and raw final implementation/tests. This is conformance to approved decisions, not a new design review.
 
+### Lock verification to the changed feature
+
+Validation is feature-scoped, not project-wide. The frozen contract authorizes only the changed feature/screen, its QA scenario IDs and exact codeReviewPaths. Do not audit the whole repository, whole files for unrelated defects, adjacent screens, general architecture or unrelated workflows. Read unchanged dependencies only as context necessary to understand an in-scope change; this does not authorize reviewing or exercising them independently. Navigation/login/setup may traverse other screens solely to reach the approved scenario, not to test those screens. Run repository-required verification commands when needed, but unrelated baseline failures do not become feature findings without evidence of causation by this change.
+
+Every in-contract QA finding must identify its approved qaScenarios; every in-contract Code Review/Test Analyst finding must identify changedPaths inside codeReviewPaths. All these findings require changeEvidence explaining the changed behavior/hunk and why it causes or fails to implement the approved scenario. A generic AC/INV citation or an unchanged file path alone is insufficient. Do not invent causal evidence. A direct regression must additionally identify an already-frozen regression surface; an unrelated pre-existing defect is not a regression. Do not deliberately search for out-of-scope issues even to label them FOLLOW_UP. If one is encountered incidentally, record a brief non-blocking follow-up, do not investigate or repair it, and continue the assigned feature. Scope expansion needs an explicit owner decision and contract amendment; never enlarge the scope unilaterally. Apply the same boundary to independent review, directed revalidation and conformance.
+
 ### Execute complete review rounds
 
 The default behavioral workflow is:

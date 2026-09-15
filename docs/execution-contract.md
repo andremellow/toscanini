@@ -47,3 +47,15 @@ See [architecture workflow](architecture-workflow.md) for schema v3 product-owne
 ## Execution readiness
 
 Before Worker dispatch, complete the [execution readiness assessment](../skills/toscanini-workflow/references/execution-readiness.md) in the contract. Required installations, registry/licence access, services, verification prerequisites and user actions must be resolved in the Worker environment. Architecture approval alone does not mean execution is ready. This applies to new schema v3 contracts; historical v2 contracts remain readable.
+
+## Lock validation to the changed feature
+
+For schema v3, freeze exact project-relative file paths in `validationScope.codeReviewPaths` and the feature/screen scenarios in `validationScope.qaScenarios`. Do not use repository-wide patterns or turn a broad invariant such as “preserve security” into authorization to inspect unrelated features. Expected file paths may be established during planning; material boundary changes require owner approval before review.
+
+QA exercises only those scenarios. Code Review and Test Analyst inspect changed hunks and directly affected behavior within those paths. Reading unchanged dependencies for context and navigating another screen for setup never authorize auditing them. Existing broad verification commands may still run, but unrelated failures require causal attribution before blocking this feature.
+
+In-contract findings from QA require `qaScenarios`; Code Review/Test Analyst findings require `changedPaths`. All require `changeEvidence` connecting the problem to changed behavior or an approved requirement not implemented by this change. The ledger rejects a valid AC/INV citation accompanied by an unrelated scenario/path or missing causal evidence. QA coverage outside the frozen matrix is rejected. Direct regressions must also cite a frozen regression surface; discovering an old defect does not establish regression.
+
+Do not deliberately search for unrelated follow-ups. An incidental observation may be noted briefly as non-blocking, with no investigation or repair. Rejecting an out-of-scope finding means correcting its classification or review evidence, never sending the Worker to fix the unrelated feature. Schema v2 history retains its original evidence shape. These checks enforce declared targets and evidence completeness; judging whether causal evidence is true remains the verifier's responsibility.
+
+Version 0.9.1 adds these scope evidence fields. Existing v3 run reports remain readable; revalidating an existing v3 contract requires supplying the explicit review paths and finding linkage rather than assuming a repository-wide scope.
