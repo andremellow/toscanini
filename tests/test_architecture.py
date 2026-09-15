@@ -74,6 +74,15 @@ class ArchitectureTests(unittest.TestCase):
         result = self.check('toscanini-gate.py', '--require-architecture', '--require-contract')
         self.assertTrue(result['approved'], result)
 
+    def test_qa_cannot_add_an_unrelated_screen_to_coverage(self):
+        self.implemented()
+        for event in self.history:
+            if event.get('role') == 'qa' and event.get('event') == 'completed':
+                event['coverage'].append('QA-UNRELATED-SCREEN')
+        result = self.check()
+        self.assertFalse(result['approved'])
+        self.assertIn('QA reported unauthorized scenarios: QA-UNRELATED-SCREEN', result['findings'])
+
     def test_artifact_alone_makes_conformance_applicable(self):
         self.implemented()
         self.contract['architecture']['required'] = False
@@ -159,7 +168,7 @@ class ArchitectureTests(unittest.TestCase):
         self.pair('qa', 'qa', 'pass', coverage=['QA-01'], **delta)
         self.pair('architect', 'architecture-conformance', 'pass', artifact='conformance.md')
         ledger = {'runId': 'arch', 'findings': [{
-            'id': 'QA-01', 'sourceRole': 'qa', 'failureStage': 'implementation',
+            'id': 'QA-01', 'sourceRole': 'qa', 'qaScenarios': ['QA-01'], 'changeEvidence': 'Changed persistence flow fails AC-01', 'failureStage': 'implementation',
             'classification': 'IMPLEMENTATION_DEVIATION', 'scope': 'in-contract', 'severity': 'blocking',
             'basis': 'acceptance-criterion', 'acceptanceCriteria': ['AC-01'], 'invariants': [],
             'discoveredRound': 1, 'discoveredPhase': 'qa', 'summary': 'Persistence outcome failed',

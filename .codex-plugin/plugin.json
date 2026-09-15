@@ -1,6 +1,6 @@
 {
   "name": "toscanini",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "A reusable, review-driven multi-agent development workflow for Codex.",
   "author": {
     "name": "Toscanini contributors"

@@ -37,6 +37,7 @@ def execution_contract(run_id: str, assurance: str = "standard") -> dict:
         "acceptanceCriteria": [{"id": "AC-01", "statement": "The changed behavior works"}],
         "validationScope": {
             "scopeId": "scope-1",
+            "codeReviewPaths": ["src/feature.py"],
             "frozen": True,
             "regressionSurfaces": ["Changed behavior"],
             "qaScenarios": [{"id": "QA-01", "description": "Exercise the changed behavior", "acceptanceCriteria": ["AC-01"], "invariants": []}],
@@ -101,7 +102,7 @@ class WorkflowTests(unittest.TestCase):
                 ("direct-regression", "regressionSurface", "Changed behavior", "Unrelated behavior"),
             ]:
                 with self.subTest(basis=basis):
-                    item = {"id": "F-01", "sourceRole": "qa", "failureStage": "implementation",
+                    item = {"id": "F-01", "sourceRole": "qa", "qaScenarios": ["QA-01"], "changeEvidence": "Changed feature fails its approved scenario", "failureStage": "implementation",
                             "classification": "IMPLEMENTATION_DEVIATION", "scope": "in-contract",
                             "severity": "blocking", "status": "resolved", "basis": basis,
                             "acceptanceCriteria": ["AC-01"], "invariants": [],
@@ -446,7 +447,7 @@ class WorkflowTests(unittest.TestCase):
             (run_root / "execution-contract.json").write_text(json.dumps(execution_contract(run_id)))
             ledger = {
                 "schemaVersion": 1, "runId": run_id, "findings": [{
-                    "id": "QA-01", "sourceRole": "qa", "severity": "blocking",
+                    "id": "QA-01", "sourceRole": "qa", "qaScenarios": ["QA-01"], "changeEvidence": "Changed feature fails its approved scenario", "severity": "blocking",
                     "classification": "IMPLEMENTATION_DEVIATION", "failureStage": "implementation", "scope": "in-contract",
                     "basis": "acceptance-criterion", "regressionSurface": None,
                     "discoveredRound": 1, "discoveredPhase": "qa",
@@ -470,7 +471,7 @@ class WorkflowTests(unittest.TestCase):
             (run_root / "execution-contract.json").write_text(json.dumps(execution_contract(run_id)))
             ledger = {
                 "schemaVersion": 1, "runId": run_id, "findings": [{
-                    "id": "QA-99", "sourceRole": "qa", "severity": "blocking",
+                    "id": "QA-99", "sourceRole": "qa", "qaScenarios": ["QA-01"], "changeEvidence": "Changed feature fails its approved scenario", "severity": "blocking",
                     "classification": "NEW_REQUIREMENT", "failureStage": "specification", "scope": "in-contract", "basis": "new-idea",
                     "regressionSurface": None, "discoveredRound": 2, "discoveredPhase": "remediation",
                     "acceptanceCriteria": ["AC-01"], "summary": "Adjacent improvement",
@@ -493,7 +494,7 @@ class WorkflowTests(unittest.TestCase):
             (run_root / "execution-contract.json").write_text(json.dumps(execution_contract(run_id)))
             ledger = {
                 "schemaVersion": 1, "runId": run_id, "findings": [{
-                    "id": "QA-01", "sourceRole": "qa", "failureStage": "implementation",
+                    "id": "QA-01", "sourceRole": "qa", "qaScenarios": ["QA-01"], "changeEvidence": "Changed feature fails its approved scenario", "failureStage": "implementation",
                     "severity": "blocking", "classification": "IMPLEMENTATION_DEVIATION",
                     "scope": "in-contract", "basis": "acceptance-criterion", "regressionSurface": None,
                     "discoveredRound": 1, "discoveredPhase": "qa", "acceptanceCriteria": ["AC-01"],
@@ -518,7 +519,7 @@ class WorkflowTests(unittest.TestCase):
             (run_root / "execution-contract.json").write_text(json.dumps(execution_contract(run_id)))
             (run_root / "finding-ledger.json").write_text(json.dumps({
                 "schemaVersion": 1, "runId": run_id, "findings": [{
-                    "id": "QA-01", "sourceRole": "qa", "failureStage": "implementation",
+                    "id": "QA-01", "sourceRole": "qa", "qaScenarios": ["QA-01"], "changeEvidence": "Changed feature fails its approved scenario", "failureStage": "implementation",
                     "severity": "blocking", "classification": "IMPLEMENTATION_DEVIATION",
                     "scope": "in-contract", "basis": "acceptance-criterion", "regressionSurface": None,
                     "discoveredRound": 1, "discoveredPhase": "qa", "acceptanceCriteria": ["AC-01"],

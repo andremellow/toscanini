@@ -13,7 +13,9 @@
       "regressionSurface": null,
       "discoveredRound": 1,
       "discoveredPhase": "review",
-      "acceptanceCriteria": ["AC-01"],
+      "acceptanceCriteria": [
+        "AC-01"
+      ],
       "invariants": [],
       "summary": "Describe the observed problem without hidden reasoning.",
       "evidence": "Reference a file, behavior, command result, or artifact.",
@@ -24,7 +26,12 @@
         "decision": "pending",
         "applied": false
       },
-      "status": "open"
+      "status": "open",
+      "changedPaths": [
+        "replace/with/approved/changed-file"
+      ],
+      "qaScenarios": [],
+      "changeEvidence": "Name the changed hunk or feature behavior and show its causal link to the approved requirement or regression."
     }
   ]
 }

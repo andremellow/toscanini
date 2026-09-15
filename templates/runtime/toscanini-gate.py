@@ -132,6 +132,10 @@ def main() -> int:
         elif role in FRESH_CONTEXT_GATES and event.get("reviewMode") == "independent" and event.get("contextMode") != "fresh":
             findings.append(f"non-independent gate: {role} ({event.get('contextMode', 'missing context mode')})")
         if contract_required:
+            if role == "qa" and event:
+                extra = set(event.get("coverage", [])) - required_qa_coverage
+                if extra:
+                    findings.append(f"QA reported unauthorized scenarios: {', '.join(sorted(extra))}")
             starts = [value for value in role_history if value.get("event") == "started" and value.get("reviewMode") == "independent"]
             if not starts:
                 findings.append(f"missing started event: {role}")
