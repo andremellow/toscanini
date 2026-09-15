@@ -5,7 +5,7 @@
 <h1 align="center">Toscanini</h1>
 
 <p align="center">
-  A disciplined multi-agent workflow for shipping software with independent architecture, testing, QA, and code review.
+  A disciplined multi-agent workflow for shipping software with owner-approved architecture, automated testing, independent QA and code review.
 </p>
 
 <p align="center">
@@ -89,9 +89,9 @@ Use `toscanini assurance` to show the current default. You can also override it 
 
 | Level | Intended use | Convergence budget |
 | --- | --- | --- |
-| `fast` | Narrow, low-risk work | One correction round; 8 specialist starts |
-| `standard` | Normal product development | Two correction rounds; 15 specialist starts |
-| `critical` | Security, billing, concurrency, migrations, or data-loss risk | Deeper evidence; at most 2 consolidated remediation rounds and 18 specialist starts |
+| `fast` | Narrow, low-risk work | One correction round; 7 specialist starts |
+| `standard` | Normal product development | Two correction rounds; 14 specialist starts |
+| `critical` | Security, billing, concurrency, migrations, or data-loss risk | Deeper evidence; at most 2 consolidated remediation rounds and 17 specialist starts |
 
 Review findings are consolidated before correction. Reaching the budget never converts an unresolved finding into an approval.
 
@@ -116,11 +116,11 @@ Toscanini does **not**:
 | QA | Exercises the running UI or API with representative data. It does not review source code. |
 | Code Reviewer | Independently reviews the production diff for correctness, security, and maintainability. |
 
-Architecture and design reviewers join when the change requires them. Reviewers receive neutral context and start without the implementation conversation, reducing confirmation bias.
+The Architect authors applicable architecture for direct product-owner approval and checks implementation conformance once after QA. Design review joins when applicable. Reviewers receive neutral context and start without the implementation conversation, reducing confirmation bias.
 
 Before implementation, Toscanini freezes an **execution contract**: goal, scope, non-goals, acceptance criteria, architecture invariants, assurance, and budgets. Context isolation removes persuasive history, not this contract. Code Review and Test Analyst inspect one stable checkpoint before executable QA, return their complete findings, and Toscanini sends one consolidated correction batch to the responsible stage.
 
-When Spec Kit is enabled, complex work requires approved specification, clarification, and plan artifacts. Toscanini asks before an explicit waiver; it never silently skips a required specification. Corrections reopen only affected gates, while a final independent review covers the complete contract.
+When Spec Kit is enabled, complex work requires approved specification, clarification, and plan artifacts. Toscanini asks before an explicit waiver; it never silently skips a required specification. Corrections reopen only affected gates, with one final Architect conformance check when architecture exists.
 
 Use the visible exit gate after implementing a task:
 
@@ -128,7 +128,7 @@ Use the visible exit gate after implementing a task:
 toscanini verify --run-id <run-id>
 ```
 
-It first validates the exact execution contract and Spec Kit approvals, reports the detected Laravel and Laravel Boost state, enforces the project's Boost policy, and only then runs the repository's canonical verification command. The run ID is required when Spec Kit is enabled so an older feature cannot accidentally approve the current one.
+It first validates the exact execution contract and Spec Kit approvals, reports the detected Laravel and Laravel Boost state, enforces the project's Boost policy, and only then runs the repository's canonical verification command. The run ID is required in every installed project so an older feature cannot accidentally approve the current one.
 
 See [Execution contracts and convergence](docs/execution-contract.md) for the contract, finding ledger, remediation, and budget model.
 
@@ -292,3 +292,19 @@ brew install andremellow/tap/toscanini
 ## Readable document reports
 
 Generate a versioned reader from a manifest of actual project Markdown files with `toscanini report --manifest report.json --serve`. Each version retains its documents and ordering. See [document reports](docs/document-reports.md) for the manifest and agent handoff.
+
+### Architecture authoring and approval
+
+1. Specification and clarification when applicable.
+2. Planning.
+3. Architecture authoring when applicable.
+4. Product-owner approval of the architecture and execution contract.
+5. Task generation.
+6. One Worker implements production code and tests.
+7. Deterministic verification.
+8. Code Review and Test Analyst review at the same stable checkpoint.
+9. Executable QA.
+10. If an architecture artifact exists, the Architect checks final implementation conformance once.
+11. Completion gate.
+
+The Architect defines implementation patterns, directory/class structure, query placement, dependency direction and system invariants. See [architecture workflow](docs/architecture-workflow.md) for approval evidence, conformance and upgrade compatibility.

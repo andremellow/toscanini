@@ -50,8 +50,8 @@ def efficiency_score(contract: dict, events: list[dict], findings: list[dict], g
         penalty = min(45, max(0, round((ratio - 1) * 2)))
         score -= penalty
         signals.append(f"Elapsed/baseline ratio: {ratio:.1f}x (-{penalty})")
-    starts = [event for event in events if event.get("event") == "started" and event.get("role") != "orchestrator"]
-    unique_roles = {event.get("role", "unknown") for event in starts}
+    starts = [event for event in events if event.get("event") == "started" and event.get("role") not in {"orchestrator", "product-owner"}]
+    unique_roles = {(event.get("role", "unknown"), event.get("phase") if event.get("role") == "architect" else None) for event in starts}
     repeated_start_penalty = min(20, max(0, len(starts) - len(unique_roles)) * 2)
     score -= repeated_start_penalty
     signals.append(f"Repeated specialist starts: {max(0, len(starts) - len(unique_roles))} (-{repeated_start_penalty})")
@@ -78,13 +78,14 @@ def write_report(root: Path, run_id: str, gate_findings: list[str]) -> Path:
     ledger = read_json(ledger_path(root, run_id))
     events = run_events(root, run_id)
     findings = ledger.get("findings", [])
-    starts = [event for event in events if event.get("event") == "started" and event.get("role") != "orchestrator"]
+    starts = [event for event in events if event.get("event") == "started" and event.get("role") not in {"orchestrator", "product-owner"}]
     roles = Counter(event.get("role", "unknown").replace("_", "-") for event in starts)
     rounds = sorted({event.get("round") for event in events if isinstance(event.get("round"), int)})
     followups = [item for item in findings if item.get("scope") == "follow-up"]
     resolved = [item for item in findings if item.get("status") == "resolved"]
     open_items = [item for item in findings if item.get("status") != "resolved"]
-    repeated = {role: count for role, count in roles.items() if count > 1}
+    responsibilities = Counter(f"architect ({event.get('phase', 'unknown')})" if event.get("role") == "architect" else event.get("role", "unknown") for event in starts)
+    repeated = {role: count for role, count in responsibilities.items() if count > 1}
     score, score_signals = efficiency_score(contract, events, findings, gate_findings)
     result = "PASS" if not gate_findings else "BLOCKED"
     lines = [
@@ -103,7 +104,7 @@ def write_report(root: Path, run_id: str, gate_findings: list[str]) -> Path:
     lines += ["",
         "## Agent usage", "",
     ]
-    lines.extend(f"- {role}: {count}" for role, count in sorted(roles.items()))
+    lines.extend(f"- {role}{' (legacy evidence; retired role)' if role == 'architecture-reviewer' else ''}: {count}" for role, count in sorted(roles.items()))
     if not roles:
         lines.append("- No specialist telemetry was recorded.")
     lines += ["", "## Findings", "",
