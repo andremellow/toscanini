@@ -42,7 +42,7 @@ def main() -> int:
     legacy_manifest = json.loads(legacy_manifest_path.read_text(encoding="utf-8"))
     configuration = legacy_manifest.get("configuration", {})
     adapters = configuration.get("adapters", [])
-    enabled_agents = {"test-analyst" if agent == "test-expert" else agent for agent in configuration.get("agents", workflow.BUILT_IN_AGENTS)}
+    enabled_agents = {"test-analyst" if agent == "test-expert" else "architect" if agent == "architecture-reviewer" else agent for agent in configuration.get("agents", workflow.BUILT_IN_AGENTS)}
     enabled_agents.add("specification-reviewer")
     disabled_agents = [agent for agent in workflow.BUILT_IN_AGENTS if agent not in enabled_agents]
     extensions = configuration.get("extensions", [])
@@ -50,6 +50,7 @@ def main() -> int:
         parser.error("legacy extensions require manual migration to toscanini-extension.json before this script can continue")
 
     removals: list[Path] = []
+    archives: list[Path] = []
     conflicts: list[str] = []
     for relative, metadata in legacy_manifest.get("files", {}).items():
         path = target / relative
@@ -57,6 +58,8 @@ def main() -> int:
             continue
         if digest(path) == metadata.get("sha256"):
             removals.append(path)
+        elif relative == ".codex/agents/architecture-reviewer.toml":
+            archives.append(path)
         else:
             conflicts.append(relative)
 
@@ -75,6 +78,7 @@ def main() -> int:
             "extensions": extensions,
         },
         "remove": sorted(str(path.relative_to(target)) for path in removals),
+        "archive": [str(path.relative_to(target)) for path in archives],
         "replaceManagedAgentsBlock": agents_before != agents_after,
         "conflicts": sorted(set(conflicts)),
     }
@@ -84,6 +88,12 @@ def main() -> int:
     if args.dry_run:
         return 0
 
+    for path in archives:
+        archive = target / ".toscanini/legacy" / f"{digest(path)}-{path.name}"
+        archive.parent.mkdir(parents=True, exist_ok=True)
+        if not archive.exists():
+            archive.write_bytes(path.read_bytes())
+        path.unlink()
     for path in removals:
         path.unlink()
     agents_path.write_text(agents_after, encoding="utf-8")

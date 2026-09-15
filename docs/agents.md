@@ -4,7 +4,7 @@ The primary Codex session is the orchestrator. It preserves requirements, choose
 
 - **Architect:** read-only; proposes boundaries, contracts, data and operational risks.
 - **Specification reviewer:** read-only and independent; identifies ambiguity and validates required specification, clarification, plan, and explicit waiver evidence before architecture or implementation.
-- **Architecture reviewer:** read-only and independent; challenges the plan and final alignment.
+- **Product owner:** approves the Architect’s artifact and execution contract directly before tasks and implementation.
 - **Design agent:** read-only for production code; maps the existing system and creates a UI contract.
 - **Design reviewer:** read-only and independent; checks implementation with browser evidence when warranted.
 - **Worker:** the built-in Codex worker; sole owner of production edits during implementation.
@@ -14,7 +14,7 @@ The primary Codex session is the orchestrator. It preserves requirements, choose
 
 The Test Analyst and QA are deliberately separate. The Test Analyst can reject a green but ineffective test suite. QA can reject an implementation that passes automation but fails through the actual screen, control, request, or workflow. QA prepares a complete scenario matrix, creates only scoped disposable test data, observes runtime evidence, and cleans up what it created. It returns `BLOCKED` rather than touching an environment whose safety it cannot establish.
 
-All specialists receive the approved execution contract and accepted artifacts without inheriting the implementation conversation. Reviewers report their complete material finding set at one stable checkpoint. Toscanini classifies and consolidates those findings before returning one correction batch to the responsible stage. Remediation verification is directed; final review is fresh and independent.
+Architect authoring receives the draft contract and plan; all implementation/validation specialists receive the approved execution contract and accepted artifacts without inheriting the implementation conversation. Reviewers report their complete material finding set at one stable checkpoint. Toscanini classifies and consolidates those findings before returning one correction batch to the responsible stage. Remediation verification is directed; final Architect conformance checks the implementation against approved decisions once, without redesign.
 
 Use the Codex subagent interface to inspect activity. Add a specialist by creating a narrowly scoped `.codex/agents/<name>.toml` template, documenting its write boundary, and adding it to `templates/agent-index.json`.
 
@@ -35,3 +35,5 @@ Non-interactive environments can manage one role at a time:
 toscanini agent enable qa
 toscanini agent disable design-reviewer
 ```
+
+The Architect writes only the assigned architecture or conformance artifact. Its authoring contract is installed at `.toscanini/templates/architecture.md`. Its post-implementation responsibility is conformance, not an additional document-review role.

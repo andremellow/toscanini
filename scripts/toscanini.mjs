@@ -14,7 +14,6 @@ const builtInAdapters = ["laravel", "spec-kit", "terminal-ui"];
 const assuranceLevels = ["fast", "standard", "critical"];
 const builtInAgents = [
   "architect",
-  "architecture-reviewer",
   "code-reviewer",
   "design-agent",
   "design-reviewer",
@@ -27,6 +26,7 @@ function usage() {
   console.log(`Toscanini
 
 Usage:
+  toscanini report --manifest PATH [--target PATH] [--serve] [--port PORT]
   toscanini --version
   toscanini version [--target PATH]
   toscanini init [--yes] [--target PATH]
@@ -108,7 +108,7 @@ function configuration(target) {
   const installed = manifest(target);
   if (!installed) throw new Error(`Toscanini is not installed in ${target}. Run 'toscanini init' first.`);
   const current = installed.configuration ?? {};
-  const configuredAgents = (current.agents ?? builtInAgents).map((agent) => agent === "test-expert" ? "test-analyst" : agent);
+  const configuredAgents = (current.agents ?? builtInAgents).map((agent) => agent === "test-expert" ? "test-analyst" : agent === "architecture-reviewer" ? "architect" : agent);
   return {
     adapters: [...(current.adapters ?? [])],
     agents: [...new Set(configuredAgents)],
@@ -333,7 +333,7 @@ async function init(target, options) {
   const detected = inspect(target);
   const installed = manifest(target)?.configuration;
   const adapters = [...(installed?.adapters ?? [])];
-  const agents = [...new Set((installed?.agents ?? builtInAgents).map((agent) => agent === "test-expert" ? "test-analyst" : agent))];
+  const agents = [...new Set((installed?.agents ?? builtInAgents).map((agent) => agent === "test-expert" ? "test-analyst" : agent === "architecture-reviewer" ? "architect" : agent))];
   const extensions = [...(installed?.extensions ?? [])];
   const assurance = installed?.assurance ?? "standard";
   let laravelBoost = installed?.laravelBoost ?? "optional";
@@ -434,6 +434,10 @@ function laravelBoost(target, policy, dryRun) {
 }
 
 async function main() {
+  if (process.argv[2] === "report") {
+    const { reportCommand } = await import("./report.mjs");
+    return reportCommand(process.argv.slice(3));
+  }
   const { positional, options } = parse(process.argv.slice(2));
   if (options.version) return showVersion(options.target, true);
   if (options.help || positional.length === 0) return usage();

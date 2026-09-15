@@ -1,6 +1,6 @@
 {
   "name": "toscanini",
-  "version": "0.1.0",
+  "version": "0.9.0",
   "description": "A reusable, review-driven multi-agent development workflow for Codex.",
   "author": {
     "name": "Toscanini contributors"
@@ -9,7 +9,7 @@
   "interface": {
     "displayName": "Toscanini",
     "shortDescription": "Plan, implement, review, and verify software changes.",
-    "longDescription": "Installs a project-aware multi-agent workflow with independent architecture, design, QA, and code review, deterministic verification, and optional live observability.",
+    "longDescription": "Installs a project-aware workflow with owner-approved architecture, implementation conformance, independent design, QA and code review, deterministic verification, and optional live observability.",
     "developerName": "Toscanini contributors",
     "category": "Developer Tools",
     "capabilities": [],
